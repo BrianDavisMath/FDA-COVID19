@@ -1,7 +1,8 @@
-from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from warnings import warn
 import warnings
 import numpy as np
+import pickle
+from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
@@ -9,20 +10,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from deap import base
 from deap import creator
 from deap import tools
-
-
-# synthetic data
-n_samples, n_dims = 1000, 100
-input_array = np.random.sample(size=(n_samples, n_dims))
-activity_labels = np.random.choice(2, size=n_samples, p=(0.95, 0.05))
-
-
-"""
-# Random Forest Method: usage example
-feature_selector = RandomForestFeatureSelection()
-feature_selector.fit(input_array, activity_labels)
-reduced_features = feature_selector.transform(input_array, 10)
-"""
 
 
 class RandomForestFeatureSelection:
@@ -41,6 +28,12 @@ class RandomForestFeatureSelection:
     def transform(self, features, num_keep_features):
         return np.take(features, np.argsort(self.feature_importance)[:num_keep_features], axis=1)
 
+    def save(self):
+        print("save")
+
+    def load(self):
+        print("load")
+
 
 """
 # Sparse PCA method: usage example
@@ -57,7 +50,7 @@ class SparsePCAFeatureSelection:
         self.dim = None
 
     def fit(self, features, labels):
-        *_, self.dim = features.shape
+        _, self.dim = features.shape
         lifted_data = np.hstack([features, labels.reshape(1, -1).transpose()])
         self.spca.fit(lifted_data)
         components = self.spca.components_
@@ -192,11 +185,18 @@ class GeneticFeatureSelection(BaseEstimator, TransformerMixin):
     def transform(self, features):
         return features[:, self.feature_mask == 1]
 
+# synthetic data
+n_samples, n_dims = 1000, 100
+input_array = np.random.sample(size=(n_samples, n_dims))
+activity_labels = np.random.choice(2, size=n_samples, p=(0.95, 0.05))
 
-
-
-
-
+# Random Forest Method: usage example
+feature_selector = RandomForestFeatureSelection()
+feature_selector.fit(input_array, activity_labels)
+s = pickle.dumps(feature_selector)
+feature_selector2 = pickle.loads(s)
+reduced_features = feature_selector2.transform(input_array, 10)
+print(reduced_features)
 
 
 
