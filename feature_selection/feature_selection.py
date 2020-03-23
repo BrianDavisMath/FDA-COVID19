@@ -52,7 +52,6 @@ class RandomForestFeatureSelection(FeatureSelectionModel):
         pickle_out.close()
 
     def load(self, location):
-        #serialized_fs = super(self, location)
         serialized_fs = open(location, 'rb')
         fs = pickle.load(serialized_fs)
         self.feature_importance = fs.feature_importance
