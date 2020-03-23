@@ -12,7 +12,7 @@ from deap import creator
 from deap import tools
 from abc import ABC, abstractmethod
 
-class FeatureSelectionModel(ABC):
+class BaseFeatureSelectionModel(ABC):
     @abstractmethod
     def fit(self, features, labels, num_trials=25, randseed=42):
         pass
@@ -30,7 +30,7 @@ class FeatureSelectionModel(ABC):
         pass
 
 
-class RandomForestFeatureSelection(FeatureSelectionModel):
+class RandomForestFeatureSelection(BaseFeatureSelectionModel):
     def __init__(self):
         self.feature_importance = None
 
