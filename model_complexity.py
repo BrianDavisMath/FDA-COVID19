@@ -47,9 +47,10 @@ with open(interactions_file, newline='') as csvfile:
                 features.append(combined_vector)
                 labels.append(label)
 
-features = features[:50]
-labels = labels[:50]
+#features = features[:100]
+#labels = labels[:100]
 
+print("cleaning input data")
 # removing columns with at least 5% "na"
 num_na_list = []
 for col_num, _ in enumerate(features[0]):
@@ -64,10 +65,13 @@ for i, num_na in enumerate(num_na_list):
     if num_na / len(features) >= 0.05:
         removed_cols.append(i)
 
+print("removing bad columns")
+
 features = np.array(features)
-features = np.delete(features, removed_cols, axis=1)\
+features = np.delete(features, removed_cols, axis=1)
 
 # removing remaining rows with anything that can't converted to a float
+print("removing bad rows")
 removed_rows = []
 for i, _ in enumerate(features):
     for j, value in enumerate(features[i]):
@@ -76,16 +80,20 @@ for i, _ in enumerate(features):
         except:
             removed_rows.append(i)
             break
+
+print("removing bad rows")
 features = np.delete(features, removed_rows, axis=0)
 labels = np.delete(labels, removed_rows, axis=0)
 
 features = features.astype(np.float)
 labels = labels.astype(np.float)
 
+print("input data cleaned")
+
 #fingerprints = np.vstack([active_prints, decoy_prints])
 #labels = np.vstack([np.ones((len(active_prints), 1)), np.zeros((len(decoy_prints), 1))]).flatten().astype(int)
 
-print("Training...")
+print("calculating model scores...")
 
 print(features.shape)
 
@@ -103,6 +111,7 @@ test_labels = labels[test_indices]
 scores = []
 grid_search = itertools.product(range(1, 200), range(1, 20))
 for d, e in grid_search:
+    print(d,e)
     model = RandomForestClassifier(n_estimators=d, max_depth=e, class_weight='balanced')
     model.fit(training_features, training_labels)
     predicted_probs = model.predict_proba(test_features)[:, 1]
@@ -110,8 +119,7 @@ for d, e in grid_search:
     depth = max([estimator.tree_.max_depth for estimator in model.estimators_])
     scores.append([d, depth, np.round(auc(recall, precision), 5)])
 
-print("DONE")
-print(scores)
+print("Done")
 
 grid = np.array(scores)[:, :2]
 perf = np.array(scores)[:, 2]
