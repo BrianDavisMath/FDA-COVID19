@@ -4,8 +4,8 @@ A repo for the FDA repurposing project (Joint w/ Markey Cancer Center and Oak Ri
 ## Workflow
 The data aggregation process will be documented elsewhere. For the purposes of this work, we will assume that we have received a zipped folder containing:
   * interactions.txt: Each row contains a CID (drug/ligand), a PID (protein), and a binary label.
-  * a folder protein_features: each file in the folder contains a line for each CID, plus a row of features
-  * a folder ligand_features: each file in the folder contains a line for each PID, plus a row of features
+  * a folder protein_features: each file in the folder contains a row of features for each CID.
+  * a folder ligand_features: each file in the folder contains a row of features for each PID.
  
 ### Assembling Raw Features
   * A csv file indexed by PID is created by concatenating the rows of each file in protein_features folder.
