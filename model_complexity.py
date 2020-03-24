@@ -13,7 +13,7 @@ import csv
 
 
 drug_features_file = '../FDA-COVID19_raw_data/dragon_features.csv'
-protein_features_file = '../FDA-COVID19_raw_data/profeat.csv'
+protein_features_file = '../FDA-COVID19_raw_data/protein_features.csv'
 interactions_file = '../FDA-COVID19_raw_data/interactions.txt'
 drug_dict = {}
 protein_dict = {}
@@ -24,15 +24,15 @@ with open(drug_features_file, newline='') as csvfile:
     csvreader = csv.reader(csvfile, delimiter=',', quotechar='|')
     for i, row in enumerate(csvreader):
         if i != 0:
-            # assuming cid is first column
-            drug_dict[row[0]] = row[1:]
+            # assuming cid is first column, name is second column
+            drug_dict[row[0]] = row[2:]
 
 with open(protein_features_file, newline='') as csvfile:
     csvreader = csv.reader(csvfile, delimiter=',', quotechar='|')
     for i, row in enumerate(csvreader):
         if i != 0:
             # assuming pid is second column
-            protein_dict[row[0]] = row[1:]
+            protein_dict[row[1]] = row[2:]
 
 with open(interactions_file, newline='') as csvfile:
     csvreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -41,23 +41,53 @@ with open(interactions_file, newline='') as csvfile:
             drug = drug_dict.get(row[1])
             protein = protein_dict.get(row[2])
             label = row[3]
-            #print([row[1], row[2], row[3]])
-            #print([i, drug, protein, label])
+
             if drug is not None and protein is not None:
-                #print(drug)
-                #print(protein)
                 combined_vector = (drug + protein)
                 features.append(combined_vector)
                 labels.append(label)
 
+features = features[:50]
+labels = labels[:50]
+
+# removing columns with at least 5% "na"
+num_na_list = []
+for col_num, _ in enumerate(features[0]):
+    num_na = 0
+    for row_num, _ in enumerate(features):
+        if features[row_num][col_num] == "na":
+            num_na += 1
+    num_na_list.append(num_na)
+
+removed_cols = []
+for i, num_na in enumerate(num_na_list):
+    if num_na / len(features) >= 0.05:
+        removed_cols.append(i)
 
 features = np.array(features)
-labels = np.array(labels)
+features = np.delete(features, removed_cols, axis=1)\
+
+# removing remaining rows with anything that can't converted to a float
+removed_rows = []
+for i, _ in enumerate(features):
+    for j, value in enumerate(features[i]):
+        try:
+            float_value = float(value)
+        except:
+            removed_rows.append(i)
+            break
+features = np.delete(features, removed_rows, axis=0)
+labels = np.delete(labels, removed_rows, axis=0)
+
+features = features.astype(np.float)
+labels = labels.astype(np.float)
+
 #fingerprints = np.vstack([active_prints, decoy_prints])
 #labels = np.vstack([np.ones((len(active_prints), 1)), np.zeros((len(decoy_prints), 1))]).flatten().astype(int)
 
-
 print("Training...")
+
+print(features.shape)
 
 outer_skf = StratifiedKFold(n_splits=5, shuffle=True)
 random_splits = [(train, test) for train, test in outer_skf.split(features, labels)]
@@ -70,9 +100,6 @@ test_features = features[test_indices]
 training_labels = labels[training_indices]
 test_labels = labels[test_indices]
 
-print(training_labels.shape)
-print(training_features.shape)
-
 scores = []
 grid_search = itertools.product(range(1, 200), range(1, 20))
 for d, e in grid_search:
@@ -82,6 +109,9 @@ for d, e in grid_search:
     precision, recall, _ = precision_recall_curve(test_labels, predicted_probs)
     depth = max([estimator.tree_.max_depth for estimator in model.estimators_])
     scores.append([d, depth, np.round(auc(recall, precision), 5)])
+
+print("DONE")
+print(scores)
 
 grid = np.array(scores)[:, :2]
 perf = np.array(scores)[:, 2]
