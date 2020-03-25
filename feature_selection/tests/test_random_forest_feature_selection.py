@@ -15,7 +15,7 @@ class TestRandomForestFeatureSelection(unittest.TestCase):
     model_location = 'example_model'
 
     feature_selector = RandomForestFeatureSelection()
-    feature_selector.fit(input_array, activity_labels)
+    feature_selector.fit(input_array, activity_labels, {})
     feature_selector.save('example_model')
 
     feature_selector2 = RandomForestFeatureSelection()

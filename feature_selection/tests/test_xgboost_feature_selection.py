@@ -15,7 +15,7 @@ class TestXGBoostFeatureSelection(unittest.TestCase):
     model_location = 'example_model'
 
     feature_selector = XGBoostFeatureSelection()
-    feature_selector.fit(input_array, activity_labels)
+    feature_selector.fit(input_array, activity_labels, {})
     feature_selector.save('example_model')
 
     feature_selector2 = XGBoostFeatureSelection()

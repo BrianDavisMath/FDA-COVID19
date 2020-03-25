@@ -15,7 +15,7 @@ class TestGeneticFeatureSelection(unittest.TestCase):
     model_location = 'example_model'
 
     feature_selector = GeneticFeatureSelection()
-    feature_selector.fit(input_array, activity_labels, num_gens=1)
+    feature_selector.fit(input_array, activity_labels, {'num_gens': 1})
     feature_selector.save('example_model')
 
     feature_selector2 = GeneticFeatureSelection()
