@@ -11,6 +11,7 @@ from deap import base
 from deap import creator
 from deap import tools
 from abc import ABC, abstractmethod
+from xgboost import XGBClassifier
 
 """
 Test the feature selection algorithms by running the following from this directory:
@@ -52,6 +53,39 @@ class RandomForestFeatureSelection(BaseFeatureSelectionModel):
             rf = RandomForestClassifier(random_state=random_seeds.pop(), n_estimators=10)
             rf.fit(features, labels)
             self.feature_importance += rf.feature_importances_
+
+    def transform(self, features, num_keep_features):
+        return np.take(features, np.argsort(self.feature_importance)[:num_keep_features], axis=1)
+
+    def save(self, location, serialized_feature_selector=None):
+        pickle_out = open(location,"wb")
+        pickle.dump(self, pickle_out)
+        pickle_out.close()
+
+    def load(self, location):
+        serialized_fs = open(location, 'rb')
+        fs = pickle.load(serialized_fs)
+        self.feature_importance = fs.feature_importance
+
+
+class XGBoostFeatureSelection(BaseFeatureSelectionModel):
+    def __init__(self):
+        self.feature_importance = None
+
+    def fit(self, features, labels, num_trials=25, randseed=42):
+        np.random.seed(randseed)
+
+        assert(len(features.shape) is 2)
+
+        n_dims = features.shape[1]
+        random_seeds = np.random.choice(num_trials ** 2, size=num_trials, replace=False).tolist()
+        self.feature_importance = np.zeros(n_dims)
+        for i in range(num_trials):
+            xgb = XGBClassifier(objective ='binary:logistic', colsample_bytree = 0.5, 
+                learning_rate = 0.1, max_depth = 200, alpha = 10, n_estimators = 10)
+
+            xgb.fit(features, labels)
+            self.feature_importance += xgb.feature_importances_
 
     def transform(self, features, num_keep_features):
         return np.take(features, np.argsort(self.feature_importance)[:num_keep_features], axis=1)
