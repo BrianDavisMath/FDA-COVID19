@@ -180,3 +180,14 @@ class GeneticFeatureSelection(BaseEstimator, TransformerMixin):
     def transform(self, features):
         return features[:, self.feature_mask == 1]
 
+    def save(self, location, serialized_feature_selector=None):
+        pickle_out = open(location,"wb")
+        pickle.dump(self, pickle_out)
+        pickle_out.close()
+
+    def load(self, location):
+        serialized_fs = open(location, 'rb')
+        fs = pickle.load(serialized_fs)
+        self.opt_record = fs.opt_record
+        self.feature_mask = fs.feature_mask
+
