@@ -3,6 +3,23 @@ from torch import nn
 
 
 class Model(nn.Module):
+    def __init__(self, dim, n_layers, in_size=1000, batch_norm=True):
+        super().__init__()
+
+        self.layers = [nn.Linear(in_size, dim), nn.ReLU()]
+        for i in range(n_layers-2):
+            self.layers += [nn.Linear(dim, dim), nn.ReLU()]
+            if batch_norm:
+                self.layers += [nn.BatchNorm1d(dim)]
+        self.layers += [nn.Linear(dim, 1)]
+        
+        self.fwd = nn.Sequential(*self.layers)
+        return
+
+    def forward(self, x):
+        return self.fwd(x)[...,0]
+
+class ResidualModel(nn.Module):
     def __init__(self, in_size, dim, n_res_blocks):
         super().__init__()
 
