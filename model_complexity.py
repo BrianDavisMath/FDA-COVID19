@@ -11,10 +11,14 @@ import pprint
 import matplotlib.pyplot as plt
 import csv
 
+from feature_selection.feature_selection import RandomForestFeatureSelection
+
 
 drug_features_file = '../FDA-COVID19_raw_data/dragon_features.csv'
 protein_features_file = '../FDA-COVID19_raw_data/protein_features.csv'
 interactions_file = '../FDA-COVID19_raw_data/interactions.txt'
+feature_selection_file = 'feature_selection/example_model'
+num_keep_features = 100
 drug_dict = {}
 protein_dict = {}
 features = []
@@ -47,9 +51,10 @@ with open(interactions_file, newline='') as csvfile:
                 features.append(combined_vector)
                 labels.append(label)
 
-features = features[:50]
-labels = labels[:50]
+#features = features[:100]
+#labels = labels[:100]
 
+print("cleaning input data")
 # removing columns with at least 5% "na"
 num_na_list = []
 for col_num, _ in enumerate(features[0]):
@@ -64,10 +69,13 @@ for i, num_na in enumerate(num_na_list):
     if num_na / len(features) >= 0.05:
         removed_cols.append(i)
 
+print("removing bad columns")
+
 features = np.array(features)
-features = np.delete(features, removed_cols, axis=1)\
+features = np.delete(features, removed_cols, axis=1)
 
 # removing remaining rows with anything that can't converted to a float
+print("removing bad rows")
 removed_rows = []
 for i, _ in enumerate(features):
     for j, value in enumerate(features[i]):
@@ -76,16 +84,23 @@ for i, _ in enumerate(features):
         except:
             removed_rows.append(i)
             break
+
 features = np.delete(features, removed_rows, axis=0)
 labels = np.delete(labels, removed_rows, axis=0)
 
 features = features.astype(np.float)
 labels = labels.astype(np.float)
 
-#fingerprints = np.vstack([active_prints, decoy_prints])
-#labels = np.vstack([np.ones((len(active_prints), 1)), np.zeros((len(decoy_prints), 1))]).flatten().astype(int)
+print("input data cleaned")
 
-print("Training...")
+print("number of features:", features.shape[1])
+print("number of examples:", features.shape[0])
+print("transforming features")
+rf_feature_selection = RandomForestFeatureSelection()
+rf_feature_selection.load(feature_selection_file)
+features = rf_feature_selection.transform(features, num_keep_features)
+print("new number of features:", features.shape[1])
+print("calculating model scores...")
 
 print(features.shape)
 
@@ -103,6 +118,7 @@ test_labels = labels[test_indices]
 scores = []
 grid_search = itertools.product(range(1, 200), range(1, 20))
 for d, e in grid_search:
+    print(d,e)
     model = RandomForestClassifier(n_estimators=d, max_depth=e, class_weight='balanced')
     model.fit(training_features, training_labels)
     predicted_probs = model.predict_proba(test_features)[:, 1]
@@ -110,8 +126,7 @@ for d, e in grid_search:
     depth = max([estimator.tree_.max_depth for estimator in model.estimators_])
     scores.append([d, depth, np.round(auc(recall, precision), 5)])
 
-print("DONE")
-print(scores)
+print("Done")
 
 grid = np.array(scores)[:, :2]
 perf = np.array(scores)[:, 2]
