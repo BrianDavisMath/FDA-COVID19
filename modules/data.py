@@ -3,21 +3,37 @@ import pandas as pd
 import os
 from torch.utils.data import Dataset
 
-
-
 class BioactivityData(Dataset):
-    def __init__(self, raw_data_path, processed_data_path, feature_selector=None):
+    def __init__(self, features, labels, weights):
 
-        # if not os.path.exists(processed_data_path):
-        #     feature_selector(raw_data_path, processed_data_path)
-        # self.dataframe = pd.read_csv(processed_data_path)
-        self.dataframe = pd.read_csv(raw_data_path).to_numpy()
+        self.features = torch.Tensor(features)
+        self.labels = torch.Tensor(labels)
+        self.weights = torch.Tensor(weights)
         return
     
     def __len__(self):
-        return len(self.dataframe)
+        return self.features.shape[0]
 
     def __getitem__(self, idx):
-        sample_row = torch.Tensor(self.dataframe[idx])
-        x, y = sample_row[:-1], sample_row[-1:]
-        return x, y
+        return self.features[idx], self.labels[idx], self.weights[idx]
+
+
+def get_data(data_path, feature_selector):
+    # TODO: make sure header options, etc work here
+    df = pd.read_csv(data_path, index_col=0)
+
+    features = df.to_numpy()[:,:-3]
+    training_mask = df["is_training"].to_numpy().astype('bool')
+
+    if feature_selector is not None:
+        features = feature_selector.transform(features)
+
+    train_data = BioactivityData(features[training_mask], 
+                                 df["label"][training_mask].to_numpy(),
+                                 df["weight"][training_mask].to_numpy())
+
+    valid_data = BioactivityData(features[~training_mask], 
+                                 df["label"][~training_mask].to_numpy(),
+                                 df["weight"][~training_mask].to_numpy())
+
+    return train_data, valid_data
