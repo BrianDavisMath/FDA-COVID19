@@ -103,7 +103,6 @@ print("new number of features:", features.shape[1])
 print("calculating model scores...")
 
 print(features.shape)
-quit
 
 outer_skf = StratifiedKFold(n_splits=5, shuffle=True)
 random_splits = [(train, test) for train, test in outer_skf.split(features, labels)]
