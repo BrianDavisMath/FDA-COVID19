@@ -12,6 +12,12 @@ from deap import creator
 from deap import tools
 from abc import ABC, abstractmethod
 
+"""
+Test the feature selection algorithms by running the following from this directory:
+
+python tests/run-tests.py
+
+"""
 class BaseFeatureSelectionModel(ABC):
     @abstractmethod
     def fit(self, features, labels, num_trials=25, randseed=42):
@@ -36,6 +42,10 @@ class RandomForestFeatureSelection(BaseFeatureSelectionModel):
 
     def fit(self, features, labels, num_trials=25, randseed=42):
         np.random.seed(randseed)
+
+        assert(len(features.shape) is 2)
+
+        n_dims = features.shape[1]
         random_seeds = np.random.choice(num_trials ** 2, size=num_trials, replace=False).tolist()
         self.feature_importance = np.zeros(n_dims)
         for i in range(num_trials):
@@ -55,24 +65,6 @@ class RandomForestFeatureSelection(BaseFeatureSelectionModel):
         serialized_fs = open(location, 'rb')
         fs = pickle.load(serialized_fs)
         self.feature_importance = fs.feature_importance
-
-
-# synthetic data
-n_samples, n_dims = 1000, 100
-input_array = np.random.sample(size=(n_samples, n_dims))
-activity_labels = np.random.choice(2, size=n_samples, p=(0.95, 0.05))
-
-# Random Forest Method: usage example
-model_location = 'example_model'
-
-feature_selector = RandomForestFeatureSelection()
-feature_selector.fit(input_array, activity_labels)
-feature_selector.save('example_model')
-
-feature_selector2 = RandomForestFeatureSelection()
-feature_selector2.load(model_location)
-reduced_features = feature_selector2.transform(input_array, 10)
-print(reduced_features)
 
 
 """
@@ -187,4 +179,15 @@ class GeneticFeatureSelection(BaseEstimator, TransformerMixin):
 
     def transform(self, features):
         return features[:, self.feature_mask == 1]
+
+    def save(self, location, serialized_feature_selector=None):
+        pickle_out = open(location,"wb")
+        pickle.dump(self, pickle_out)
+        pickle_out.close()
+
+    def load(self, location):
+        serialized_fs = open(location, 'rb')
+        fs = pickle.load(serialized_fs)
+        self.opt_record = fs.opt_record
+        self.feature_mask = fs.feature_mask
 
