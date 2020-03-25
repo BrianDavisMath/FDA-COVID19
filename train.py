@@ -32,9 +32,7 @@ train_data, valid_data = get_data(args.data_path, feature_selector)
 train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False)
 valid_loader = DataLoader(valid_data, batch_size=args.batch_size, shuffle=False)
 
-
-
-# default inoput size is 1000
+# default inoput size is 1000; dummy data csv size is 17
 model = Model(dim=args.hidden_dim, n_layers=args.n_layers, in_size=17).to(device)
 
 opt = torch.optim.Adam(model.parameters())
@@ -65,25 +63,24 @@ total_iters = 0
 for epoch in range(1, args.epochs+1):
     epoch_time = time.time()
     print(f"epoch {epoch:02d}\n")
-    for iter, (x, y, weights) in enumerate(train_loader):
-        x, y, weights = x.to(device), y.to(device), weights.to(device)
+    for iter, (x, y) in enumerate(train_loader):
+        # send minibatch to gpu, compute fwd pass & loss
+        x, y = x.to(device), y.to(device)
         logits = model(x)
+        loss = loss_fn(logits, y).mean()
 
-        unweighted_loss = loss_fn(logits, y)
-        weighted_loss = unweighted_loss*weights
-        loss = weighted_loss.mean()
-
+        # clear old gradients from .grad
         opt.zero_grad()
+        # compute gradients from current fwd pass & store in .grad
         loss.backward()
+        # one step of the optimizer using .grad
         opt.step()
 
         total_iters += 1
         if not total_iters % args.display_step:
-            unweighted_tr_loss = unweighted_loss.mean().item()
-            weighted_tr_loss = weighted_loss.mean().item()
-            val_accuracy, unweighted_val_loss, weighted_val_loss = validation(valid_loader, model, loss_fn)
+            val_accuracy, val_loss, weighted_val_loss = validation(valid_loader, model, loss_fn)
 
-            print(epoch, iter, unweighted_tr_loss, weighted_tr_loss, unweighted_val_loss, weighted_val_loss, val_accuracy)
+            print(f"{epoch:02d}, {iter:03d}, {loss.item():.4f}, {val_loss:.4f}, {weighted_val_loss:.4f}, {val_accuracy:.3f}")
         
     print(f"time: {time.time() - epoch_time:.2f}s")
 
@@ -91,7 +88,5 @@ for epoch in range(1, args.epochs+1):
 todo:
     feature selector arguments CL option
     feature selection utils function
-    unweighted / weighted loss blend
-    use parser
     dataparallel
 """
