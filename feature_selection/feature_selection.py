@@ -12,9 +12,12 @@ from deap import creator
 from deap import tools
 from abc import ABC, abstractmethod
 
+N_SAMPLES = 1000
+N_DIMS = 100
+
 class BaseFeatureSelectionModel(ABC):
     @abstractmethod
-    def fit(self, features, labels, num_trials=25, randseed=42):
+    def fit(self, features, labels, params):
         pass
 
     @abstractmethod
@@ -34,10 +37,12 @@ class RandomForestFeatureSelection(BaseFeatureSelectionModel):
     def __init__(self):
         self.feature_importance = None
 
-    def fit(self, features, labels, num_trials=25, randseed=42):
+    def fit(self, features, labels, params):
+        num_trials = params.get('num_trials',25)
+        randseed = params.get('randseed', 42)
         np.random.seed(randseed)
         random_seeds = np.random.choice(num_trials ** 2, size=num_trials, replace=False).tolist()
-        self.feature_importance = np.zeros(n_dims)
+        self.feature_importance = np.zeros(N_DIMS)
         for i in range(num_trials):
             rf = RandomForestClassifier(random_state=random_seeds.pop(), n_estimators=10)
             rf.fit(features, labels)
@@ -60,7 +65,7 @@ class RandomForestFeatureSelection(BaseFeatureSelectionModel):
 """
 # Sparse PCA method: usage example
 feature_selector = SparsePCAFeatureSelection()
-feature_selector.fit(input_array, activity_labels)
+feature_selector.fit(input_array, activity_labels, params)
 reduced_features = feature_selector.transform(input_array)
 """
 
@@ -71,13 +76,13 @@ class SparsePCAFeatureSelection:
         self.support_cols = None
         self.dim = None
 
-    def fit(self, features, labels):
+    def fit(self, features, labels, params):
         _, self.dim = features.shape
         lifted_data = np.hstack([features, labels.reshape(1, -1).transpose()])
         self.spca.fit(lifted_data)
         components = self.spca.components_
         rows, cols = components.nonzero()
-        indicated_rows = np.take(rows, np.where(cols == n_dims)[0])
+        indicated_rows = np.take(rows, np.where(cols == N_DIMS)[0])
         _, self.support_cols = components[indicated_rows, :].nonzero()
         self.support_cols = self.support_cols.tolist()
         self.support_cols.remove(self.dim)
@@ -120,7 +125,7 @@ def mask_value(mask, features, labels):
             training_labels = np.ravel(labels[training_index])
             validation_features = features_tmp[validation_index]
             validation_labels = np.ravel(labels[validation_index])
-            model.fit(training_features, training_labels)
+            model.fit(training_features, training_labels, {})
             predictions = model.predict_proba(validation_features)[:, 1]
             scores.append(roc_auc_score(validation_labels, predictions))
             return np.mean(scores)
@@ -201,28 +206,34 @@ class GeneticFeatureSelection(BaseEstimator, TransformerMixin):
         self.feature_mask = None
         self.opt_record = None
 
-    def fit(self, features, labels, num_gens=100):
+    def fit(self, features, labels, params):
+        num_gens = params.get('num_gens', 100)
+
         self.opt_record, self.feature_mask = genetic_algorithm(features, labels, num_gens)
 
     def transform(self, features):
         return features[:, self.feature_mask == 1]
 
-# synthetic data
-n_samples, n_dims = 1000, 100
-input_array = np.random.sample(size=(n_samples, n_dims))
-activity_labels = np.random.choice(2, size=n_samples, p=(0.95, 0.05))
 
-# Random Forest Method: usage example
-model_location = 'example_model'
+def main():
+    # synthetic data
+    input_array = np.random.sample(size=(N_SAMPLES, N_DIMS))
+    activity_labels = np.random.choice(2, size=N_SAMPLES, p=(0.95, 0.05))
 
-feature_selector = RandomForestFeatureSelection()
-feature_selector.fit(input_array, activity_labels)
-feature_selector.save('example_model')
+    # Random Forest Method: usage example
+    model_location = 'example_model'
 
-feature_selector2 = RandomForestFeatureSelection()
-feature_selector2.load(model_location)
-reduced_features = feature_selector2.transform(input_array, 10)
-print(reduced_features)
+    feature_selector = RandomForestFeatureSelection()
+    feature_selector.fit(input_array, activity_labels, {})
+    feature_selector.save('example_model')
+
+    feature_selector2 = RandomForestFeatureSelection()
+    feature_selector2.load(model_location)
+    reduced_features = feature_selector2.transform(input_array, 10)
+    print(reduced_features)
+  
+if __name__== "__main__":
+    main()
 
 
 

@@ -11,10 +11,14 @@ import pprint
 import matplotlib.pyplot as plt
 import csv
 
+from feature_selection.feature_selection import RandomForestFeatureSelection
+
 
 drug_features_file = '../FDA-COVID19_raw_data/dragon_features.csv'
 protein_features_file = '../FDA-COVID19_raw_data/protein_features.csv'
 interactions_file = '../FDA-COVID19_raw_data/interactions.txt'
+feature_selection_file = 'feature_selection/example_model'
+num_keep_features = 100
 drug_dict = {}
 protein_dict = {}
 features = []
@@ -81,7 +85,6 @@ for i, _ in enumerate(features):
             removed_rows.append(i)
             break
 
-print("removing bad rows")
 features = np.delete(features, removed_rows, axis=0)
 labels = np.delete(labels, removed_rows, axis=0)
 
@@ -90,12 +93,17 @@ labels = labels.astype(np.float)
 
 print("input data cleaned")
 
-#fingerprints = np.vstack([active_prints, decoy_prints])
-#labels = np.vstack([np.ones((len(active_prints), 1)), np.zeros((len(decoy_prints), 1))]).flatten().astype(int)
-
+print("number of features:", features.shape[1])
+print("number of examples:", features.shape[0])
+print("transforming features")
+rf_feature_selection = RandomForestFeatureSelection()
+rf_feature_selection.load(feature_selection_file)
+features = rf_feature_selection.transform(features, num_keep_features)
+print("new number of features:", features.shape[1])
 print("calculating model scores...")
 
 print(features.shape)
+quit
 
 outer_skf = StratifiedKFold(n_splits=5, shuffle=True)
 random_splits = [(train, test) for train, test in outer_skf.split(features, labels)]
