@@ -130,7 +130,7 @@ def mask_value(mask, features, labels):
             model.fit(training_features, training_labels)
             predictions = model.predict_proba(validation_features)[:, 1]
             scores.append(roc_auc_score(validation_labels, predictions))
-            return np.mean(scores)
+        return np.mean(scores)
     except ValueError:
         return 0
 
