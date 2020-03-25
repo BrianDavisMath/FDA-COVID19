@@ -15,10 +15,6 @@ parser = get_parser()
 args = parser.parse_args()
 
 device = "cuda"
-# n_epochs = 20
-# batch_size = 3
-# display_step = 1
-# feature_selector = 'none'
 
 if args.fs == "random_forest":
     feature_selector = RandomForestFeatureSelection()
@@ -34,6 +30,9 @@ valid_loader = DataLoader(valid_data, batch_size=args.batch_size, shuffle=False)
 
 # default inoput size is 1000; dummy data csv size is 17
 model = Model(dim=args.hidden_dim, n_layers=args.n_layers, in_size=17).to(device)
+
+if torch.cuda.device_count() > 1:
+    model = torch.nn.DataParallel(model)
 
 opt = torch.optim.Adam(model.parameters())
 loss_fn = torch.nn.BCEWithLogitsLoss(reduction='none')
@@ -62,7 +61,7 @@ def validation(loader, model, loss_fn):
 total_iters = 0
 for epoch in range(1, args.epochs+1):
     epoch_time = time.time()
-    print(f"epoch {epoch:02d}\n")
+    print(f"\nepoch {epoch:02d}\n")
     for iter, (x, y) in enumerate(train_loader):
         # send minibatch to gpu, compute fwd pass & loss
         x, y = x.to(device), y.to(device)
@@ -83,10 +82,3 @@ for epoch in range(1, args.epochs+1):
             print(f"{epoch:02d}, {iter:03d}, {loss.item():.4f}, {val_loss:.4f}, {weighted_val_loss:.4f}, {val_accuracy:.3f}")
         
     print(f"time: {time.time() - epoch_time:.2f}s")
-
-"""
-todo:
-    feature selector arguments CL option
-    feature selection utils function
-    dataparallel
-"""
