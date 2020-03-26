@@ -8,13 +8,15 @@ class BioactivityData(Dataset):
 
         self.features = torch.Tensor(features)
         self.labels = torch.Tensor(labels)
-        self.weights = torch.Tensor(weights)
+        self.weights = None if weights is None else torch.Tensor(weights)
         return
     
     def __len__(self):
         return self.features.shape[0]
 
     def __getitem__(self, idx):
+        if self.weights is None:
+            return self.features[idx], self.labels[idx]
         return self.features[idx], self.labels[idx], self.weights[idx]
 
 
@@ -28,9 +30,9 @@ def get_data(data_path, feature_selector):
     if feature_selector is not None:
         features = feature_selector.transform(features)
 
-    train_data = BioactivityData(features[training_mask], 
+    train_data = BioactivityData(features[training_mask],
                                  df["label"][training_mask].to_numpy(),
-                                 df["weight"][training_mask].to_numpy())
+                                 None)
 
     valid_data = BioactivityData(features[~training_mask], 
                                  df["label"][~training_mask].to_numpy(),

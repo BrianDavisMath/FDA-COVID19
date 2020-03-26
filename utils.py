@@ -21,12 +21,15 @@ def get_parser():
 
     return parser
 
-# def get_feature_selector(selector_string):
-#     if feature_selector == "random_forest":
-#         feature_selector = RandomForestFeatureSelection()
-#         feature_selector.load("location_of_saved_random_forest.pkl")
-#     elif feature_selector == "sparse_pca":
-#         feature_selector = SparsePCAFeatureSelection()
+def get_feature_selector(fs):
+    if fs == "random_forest":
+        feature_selector = RandomForestFeatureSelection()
+        feature_selector.load("location_of_saved_random_forest.pkl")
+    elif fs == "sparse_pca":
+        feature_selector = SparsePCAFeatureSelection()
+    elif fs == "none":
+        feature_selector = None
+    return feature_selector
 
 # def select_features(train_path, feature_selector, valid_path):
 #     np_dataset = pd.read_csv(data_path).to_numpy()
