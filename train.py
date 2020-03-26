@@ -8,7 +8,7 @@ import time
 from modules.model import Model
 from modules.data import get_data
 from feature_selection.feature_selection import RandomForestFeatureSelection, SparsePCAFeatureSelection, GeneticFeatureSelection
-from utils import get_parser
+from utils import get_parser, get_feature_selector
 
 
 parser = get_parser()
@@ -16,14 +16,7 @@ args = parser.parse_args()
 
 device = "cuda"
 
-if args.fs == "random_forest":
-    feature_selector = RandomForestFeatureSelection()
-    feature_selector.load("location_of_saved_random_forest.pkl")
-elif args.fs == "sparse_pca":
-    feature_selector = SparsePCAFeatureSelection()
-elif args.fs == "none":
-    feature_selector = None
-    
+feature_selector = get_feature_selector(args.fs)
 train_data, valid_data = get_data(args.data_path, feature_selector)
 train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False)
 valid_loader = DataLoader(valid_data, batch_size=args.batch_size, shuffle=False)
