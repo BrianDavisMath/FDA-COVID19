@@ -12,6 +12,6 @@ sparse_distances_file = "sparse_distance_mat_200_ligand8 4096.joblib"
 similarities = joblib.load(sparse_distances_file)
 mol_neighbor_graph = nx.from_scipy_sparse_matrix(similarities)
 ```
-The graph below focuses attention on the most similar protein in our dataset (PID P0C6X7, graph_ID 1335 below) to the largest protein associated to the coronavirus (PID QHD43415.1). The target protein QHD43415.1, if included in our graph, is only adjacent to P0C6X7, as it's similarity to any other protein in the dataset is very low.
+The graph below focuses attention on the most similar protein in our dataset (PID P0C6X7, graph_ID 1335 below) to the largest protein associated to the novel coronavirus (PID QHD43415.1). The target protein QHD43415.1, if included in our graph, is only adjacent to P0C6X7, as it's similarity to any other protein in the dataset is very low.
 
 ![](https://github.com/BrianDavisMath/FDA-COVID19/blob/master/test_train_split/SARS_protein_ego_graph.png?raw=true)
