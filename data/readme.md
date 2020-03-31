@@ -19,23 +19,28 @@ https://drive.google.com/file/d/1kNknevjKXO3VyLLw1PDlsd9Ldk7-WAkF/view?usp=shari
 The goal of this project is to construct a model which predicts which FDA approved drugs (if any) will bind to proteins of SARS-CoV-2. The data set consists of binary binding labels for pairs of drug-like molecules (drugs) and proteins.
 
 Some potentially relevant features have been precomputed. They have not been normalized,
-                        ** with the exception of binding_sites.csv **.
+**with the exception of binding_sites.csv**.
 
 This data set contains:
-    interactions.csv
-        Each row contains a drug / protein pair (cid / pid) and a binary label indicating if the pair of molecules bind.
-    example_feature_concatenation.csv
-        Consists of the feature vector of a single cid-pid pair. It serves as an exemplar for concatenating the feature vectors correctly. Beware that the feature files may have duplicated column names, but that the associated values may be different. The cid - pid pair is the first row of interactions.csv: 38258,CAA96025
-    fda_drug_cids.csv
-        Each row contains the cid of an FDA approved drug (or experimental drug). 
-    protein_features
-        Each csv file in this folder contains rows indexed by a protein identifier (pid).
-    drug_features
-        Each csv file in this folder contains rows indexed by a drug identifier (cid).
-    coronavirus_features
-        Each csv file in this folder contains rows indexed by a protein identifier (pid).
-    FDA_drug_features
-        Each csv file in this folder contains rows indexed by a drug identifier (cid).
+
+* interactions.csv
+
+    Each row contains a drug / protein pair (cid / pid) and a binary label indicating if the pair of molecules bind.
+* example_feature_concatenation.csv
+
+    Consists of the feature vector of a single cid-pid pair. It serves as an exemplar for concatenating the feature vectors correctly. Beware that the feature files may have duplicated column names, but that the associated values may be different. The cid - pid pair is the first row of interactions.csv: 38258,CAA96025
+* fda_drug_cids.csv
+
+    Each row contains the cid of an FDA approved drug (or experimental drug). 
+* protein_features
+
+    Each csv file in this folder contains rows indexed by a protein identifier (pid).
+* drug_features
+
+    Each csv file in this folder contains rows indexed by a drug identifier (cid).
+* coronavirus_features
+
+    Each csv file in this folder contains rows indexed by a protein identifier (pid).
 
 
 ## Consolidated Features
