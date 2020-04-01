@@ -6,3 +6,4 @@ __pycache__/
 FDA_COVID19_dataset_tmp
 FDA-COVID19_files_v0.5
 data/*.zip
+.ipynb_checkpoints/
