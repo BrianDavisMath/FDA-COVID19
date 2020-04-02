@@ -2,6 +2,7 @@
 /.coverage
 */tests/tmp
 __pycache__/
+__MAC*
 .DS_Store
 FDA_COVID19_dataset_tmp
 FDA-COVID19_files_v0.5
