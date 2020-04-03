@@ -5,15 +5,8 @@ the proteins associated to the novel coronavirus (SARS-CoV-2).
 
 # Status / Versioning
 
-protein_features/binding_sites.csv in this version (v0.5) of the data set IS INCOMPLETE. As of this writing, protein_features/binding_sites.csv contains binding site features for only approximately 75% of the proteins (PID's) in the full set.
-
-This version of the data set is also missing coronavirus_features/coronavirus_binding_sites.csv. It will be supplied with version v1.
-
-Also, note that Mordered features have been removed from the drug_features folder. It had high redundancy with dragon features and contained many errors.
-
-
-Here's a link to v0.5:
-https://drive.google.com/file/d/1kNknevjKXO3VyLLw1PDlsd9Ldk7-WAkF/view?usp=sharing
+Here's a link to v1.0:
+https://drive.google.com/file/d/1M4KU1Y0euC8b3Q111d-WnBSBuSNTkFVQ/view?usp=sharing
 
 # Project
 The goal of this project is to construct a model which predicts which FDA approved drugs (if any) will bind to proteins of SARS-CoV-2. The data set consists of binary binding labels for pairs of drug-like molecules (drugs) and proteins.
