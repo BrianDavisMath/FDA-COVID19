@@ -7,4 +7,5 @@ __MAC*
 FDA_COVID19_dataset_tmp
 FDA-COVID19_files_v0.5
 data/*.zip
+data/*
 .ipynb_checkpoints/
