@@ -7,4 +7,4 @@ There's a loose workflow for using the notebooks in this folder for conditioning
 
 1. centroid-sampling - sample data from the full set to get a balanced representation of drugs, proteins and activation class
 
-1. your choice of notebook for modeling, e.g. _greg-dimension-reduction-xgboost.ipynb_ to find a smaller set of candidate features for subsequent modeling
+1. your choice of notebook for modeling, e.g. _greg-dimension-reduction-xgboost.ipynb_ or _greg-dimension-reduction-genetic.ipynb_ to find a smaller set of candidate features for subsequent modeling
