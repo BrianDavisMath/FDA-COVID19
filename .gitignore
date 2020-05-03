@@ -8,3 +8,4 @@ FDA-COVID19_files_*
 data/training_validation_split/
 data/*.zip
 .ipynb_checkpoints/
+__MACOSX/
