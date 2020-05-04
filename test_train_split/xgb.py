@@ -6,7 +6,7 @@ This script is for feature extraction and the subsequent training
 of XGBoost for classification.
 
 The routine trains the model twice: the first time extracts the most important features;
-the second run trains the model for prediction.
+the second run trains the model for classification.
 
 Inputs for the fit method:
   
