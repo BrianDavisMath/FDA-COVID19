@@ -10,10 +10,12 @@ the second run trains the model for classification.
 
 Inputs for the fit method:
   
-  X: numpy array. Note, only feature columns
+  X: (array_like) – Feature matrix. Note only feature columns
   should be included (drop 'cid' and 'pid' etc.)
 
-  Y: array or DF of 'activity' values (0 or 1)
+  Y: (array_like) – 'activity' values (0 or 1)
+
+  sample_weight: (array_like) – instance weights
 
 
 Note that the X set should be sampled according to sample_activity_score:
@@ -44,7 +46,7 @@ class XGBoostClassifier(BaseEstimator, TransformerMixin):
     def __init__(self, random_state=None):
         self.random_state = random_state
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_weight=None):
         '''
         Steps are:
 
@@ -52,11 +54,11 @@ class XGBoostClassifier(BaseEstimator, TransformerMixin):
         (2) obtain the features that provide the most gain
         (3) train the final model on the reduced feature set
         '''
-        xgb = self.__train(X, Y)
+        xgb = self.__train(X, Y, sample_weight)
         self.selected_features = self.__select_features(xgb)
         X_reduced = X.T[self.selected_features].T
 
-        self.model = self.__train(X_reduced, Y)
+        self.model = self.__train(X_reduced, Y, sample_weight)
 
     def predict(self, X):
         X_reduced = X.T[self.selected_features].T
@@ -77,7 +79,7 @@ class XGBoostClassifier(BaseEstimator, TransformerMixin):
         features = [int(key.split('f')[1]) for key in gain_importance.keys()]
         return features
 
-    def __train(self, X, Y):
+    def __train(self, X, Y, sample_weight=None):
         self.random_state_ = check_random_state(self.random_state)
         X_train, X_test, y_train, y_test = train_test_split(
           X, Y, test_size=0.2, random_state=self.random_state_)
@@ -101,6 +103,7 @@ class XGBoostClassifier(BaseEstimator, TransformerMixin):
         xgb.fit(
           X_train, 
           y_train, 
+          sample_weight=sample_weight,
           eval_metric=["error", "logloss"], 
           eval_set=eval_set, 
           verbose=False, 
