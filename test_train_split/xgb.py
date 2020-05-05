@@ -22,6 +22,10 @@ Note that the X set should be sampled according to sample_activity_score:
 
   X = df_features[df_features['sample_activity_score'] > 0.1].values
 
+Outputs:
+
+  xgb.mdl: serialized XGboost model
+
 '''
 import pickle
 import pandas as pd
@@ -45,6 +49,8 @@ class XGBoostClassifier(BaseEstimator, TransformerMixin):
     
     def __init__(self, random_state=None):
         self.random_state = random_state
+        self.selected_features = []
+        self.feature_importance = None
 
     def fit(self, X, Y, sample_weight=None):
         '''
@@ -72,11 +78,13 @@ class XGBoostClassifier(BaseEstimator, TransformerMixin):
     def load(self, location):
         serialized_fs = open(location, 'rb')
         fs = pickle.load(serialized_fs)
+        self.selected_features = fs.selected_features
         self.feature_importance = fs.feature_importance
 
     def __select_features(self, model):
         gain_importance = model.get_booster().get_score(importance_type="gain")
         features = [int(key.split('f')[1]) for key in gain_importance.keys()]
+        self.feature_importance = gain_importance
         return features
 
     def __train(self, X, Y, sample_weight=None):
@@ -119,6 +127,7 @@ if __name__== "__main__":
     X_test = np.random.sample(size=(5, 10))
     Y = np.random.choice(2, size=N_SAMPLES, p=(0.5, 0.5))
     xgb.fit(X, Y)
+    xgb.save('./xgb.mdl')
     print(xgb.predict(X_test))
 
 
