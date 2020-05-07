@@ -5,5 +5,7 @@ __pycache__/
 .DS_Store
 FDA_COVID19_dataset_tmp
 FDA-COVID19_files_*
+data/training_validation_split/
 data/*.zip
 .ipynb_checkpoints/
+__MACOSX/
