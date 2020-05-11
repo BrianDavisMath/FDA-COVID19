@@ -87,18 +87,18 @@ class XGBoostClassifier():
     max_activity_threshold, 
     activity_threshold_step,
     data_folder):
-      self.max_activity_threshold = max_activity_threshold
-      self.activity_threshold_step = activity_threshold_step
+      self.max_activity_threshold = float(max_activity_threshold)
+      self.activity_threshold_step = float(activity_threshold_step)
       self.data_loc = data_folder
 
       # XGBoost parameters
-      self.learning_rate=0.02, 
-      self.n_estimators=600, 
-      self.objective='binary:logistic',
-      self.subsample=0.6,
-      self.min_child_weight=1,
-      self.max_depth=6,
-      self.gamma=5,
+      self.learning_rate=0.02
+      self.n_estimators=600
+      self.objective='binary:logistic'
+      self.subsample=0.6
+      self.min_child_weight=1
+      self.max_depth=6
+      self.gamma=5
       self.colsample_bytree=0.8
 
       # Create the feature sets for training and validation
@@ -109,6 +109,53 @@ class XGBoostClassifier():
       self.validation_features = self.__create_features('validation_interactions.csv', 
         'validation_features.h5', self.feature_sets)
 
+      # Iterate over activity thresholds and produce results for each one
+      activity_threshold = self.max_activity_threshold
+      while activity_threshold > 0.0:
+        df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
+        print('\n\nsample_activity_score ({}) features shape: {}'
+          .format(activity_threshold, df_features.shape))
+
+        # drop zero-variance columns
+        var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
+        df = df_features[var_cols].copy()
+
+        print('Dropped {:,} columns that have zero variance.'.format(len(df_features.columns)-len(var_cols)))
+
+        del df_features
+        df_features = df
+
+        print('Shape after dropping zero-variance columns - rows: {:,}, columns: {:,}'.
+          format(len(df_features), len(df_features.columns)))
+
+
+        # Get important features using XGBoost
+        Y = df_features['activity'].values
+        X = df_features.copy()
+        self.__drop_non_features(X)
+        print('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
+        X.columns = list(range(0, len(X.columns)))
+
+        # train
+        xgb = self.__train(X, Y, xgb=self.__get_xgb())
+
+        # get features
+        xgb_features = self.__get_features(xgb)
+        print('number of most important features: {:,}'.format(len(xgb_features)))
+
+
+
+
+
+        activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
+
+
+  '''
+  ==================================================================
+  Functions for stitching together the individual features CSV files
+  to create the training and validation sets.
+  ==================================================================
+  '''
 
   # load a specific features CSV file
   def __load_data(self, path, data_type=None):
@@ -291,14 +338,18 @@ class XGBoostClassifier():
     store['df'] = df_features
     store.close()
 
+    return df_features
+
+
+  '''
+  ==================================================================
+  Functions for using XGBoost for dimension reduction and classification
+  ==================================================================
+  '''
 
   # train an XGBoost model and use an internal split for evaluation.
   def __train(self, X, Y, xgb=None, sample_weight=None):
-    xgb.fit(
-        X, 
-        Y, 
-        verbose=False, 
-        sample_weight=sample_weight)
+    xgb.fit(X, Y, verbose=False, sample_weight=sample_weight)
     return xgb
 
   # Get feature importance as information gain 
@@ -307,7 +358,8 @@ class XGBoostClassifier():
     gain_importance = model.get_booster().get_score(importance_type="gain")
     return [int(key) for key in gain_importance.keys()]
 
-  # calculate the sample weights used for thte F1 Score
+  # calculate the sample weights used for the F1 Score
+  # TODO: Brian to write documentation for this:
   def __get_validation_weights(self, training_features_active, training_features_inactive,
                              validation_features_active, validation_features_inactive):
     active_nbrs = NearestNeighbors(n_neighbors=1).fit(training_features_active)
