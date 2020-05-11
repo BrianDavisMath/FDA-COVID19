@@ -21,6 +21,9 @@ Inputs are:
   activity_threshold_step - the amount to reduced the activity threshold
   on each run before sub-sampling the training data
 
+  data_folder - default /data. Specifies the location of the data from which the
+  features will be selected.
+
 
 Outputs:
 
@@ -31,15 +34,19 @@ Outputs:
   metrics.csv - the accuracy, precision, recall, weighted and unweighted
   F1 score representing model performane
 
+  important_features.csv - the set of most important features, along with
+  their information gain values, as returned by the first run of XGBoost.
+  These are the features that are selected for the classification pass.
+
 
 Data folder:
 
-  The program expects a data folder containing subdirectories for drug and protein features files
-  as well as the split interactions files that are used to stitch the features
-  together into sets.
+  The program expects a data folder containing subdirectories for drug and protein 
+  features files as well as the split interactions files that are used to stitch 
+  the features together into sets.
 
-  The following files and folders are expected and should be included before zipping up
-  this for distribution:
+  The following files and folders are expected and should be included before 
+  zipping up this for distribution:
 
     |____data
     | |____drug_features
@@ -78,10 +85,11 @@ class XGBoostClassifier():
   def __init__(
     self, 
     max_activity_threshold, 
-    activity_threshold_step):
+    activity_threshold_step,
+    data_folder):
       self.max_activity_threshold = max_activity_threshold
       self.activity_threshold_step = activity_threshold_step
-      self.data_loc = 'data/'
+      self.data_loc = data_folder
 
       # XGBoost parameters
       self.learning_rate=0.02, 
@@ -92,6 +100,197 @@ class XGBoostClassifier():
       self.max_depth=6,
       self.gamma=5,
       self.colsample_bytree=0.8
+
+      # Create the feature sets for training and validation
+      # Get the individual feature sets
+      self.feature_sets = self.__load_feature_files()
+      self.training_features = self.__create_features('training_interactions.csv', 
+        'training_features.h5', self.feature_sets)
+      self.validation_features = self.__create_features('validation_interactions.csv', 
+        'validation_features.h5', self.feature_sets)
+
+
+  # load a specific features CSV file
+  def __load_data(self, path, data_type=None):
+    if data_type:
+        df = pd.read_csv(path, index_col=0, dtype=data_type)
+    else:
+        df = pd.read_csv(path, index_col=0)
+    print('Number of rows: {:,}\n'.format(len(df)))
+    print('Number of columns: {:,}\n'.format(len(df.columns)))
+    
+    columns_missing_values = df.columns[df.isnull().any()].tolist()
+    print('{} columns with missing values\n\n'.format(len(columns_missing_values)))
+    
+    cols = df.columns.tolist()
+    column_types = [{col: df.dtypes[col].name} for col in cols][:10]
+    print('column types:\n')
+    print(column_types, '\n\n')
+    print(df.head(2))
+    
+    return df
+
+  # print out summary after each features merge
+  def __print_merge_details(self, df_merge_result, df1_name, df2_name):
+    print('Joining {} on protein {} yields {:,} rows and {:,} columns'. \
+          format(df1_name, df2_name, len(df_merge_result), 
+          len(df_merge_result.columns)))
+
+  # Get the individual feature sets as data frames
+  def __load_feature_files(self):
+    print('===============================================')
+    print('\ndragon_features.csv')
+    print('===============================================')
+    # note need to set the data_type to object because it complains, otherwise that the types vary.
+    df_dragon_features = self.__load_data(self.data_loc+'drug_features/dragon_features.csv', data_type=object)
+    
+    # rename the dragon features since there are duplicate column names in the protein binding-sites data.
+    df_dragon_features.columns = ['cid_'+col for col in df_dragon_features.columns]
+    
+    # handle na values in dragon_features
+    # Many cells contain "na" values. Find the columns that contain 2% or 
+    # less of these values and retain them, throwing away the rest. 
+    # Then mean-impute the "na" values in the remaining columns.
+    pct_threshold = 2
+    na_threshold = int(91424*pct_threshold/100)
+    ok_cols = []
+    for col in df_dragon_features:
+        na_count = df_dragon_features[col].value_counts().get('na')
+        if (na_count or 0) <= na_threshold:
+            ok_cols.append(col)
+
+    print('number of columns where the frequency of "na" values is <= {}%: {}.'.format(pct_threshold, len(ok_cols)))
+    
+    df_dragon_features = df_dragon_features[ok_cols].copy()
+
+    # convert all values except "na"s to numbers and set "na" values to NaNs.
+    df_dragon_features = df_dragon_features.apply(pd.to_numeric, errors='coerce')
+
+    columns_missing_values = df_dragon_features.columns[df_dragon_features.isnull().any()].tolist()
+    print('{} columns with missing values.\n\n'.format(len(columns_missing_values)))
+
+    # replace NaNs with column means
+    df_dragon_features.fillna(df_dragon_features.mean(), inplace=True)
+
+    columns_missing_values = df_dragon_features.columns[df_dragon_features.isnull().any()].tolist()
+    print('{} columns with missing values (after imputing): {}\n\n'.format(len(columns_missing_values), 
+                                                                       columns_missing_values))
+    print('===============================================')
+    print('fingerprints.csv')
+    print('===============================================')
+    df_fingerprints = self.__load_data(self.data_loc+'drug_features/fingerprints.csv')
+    
+    print('===============================================')
+    print('binding_sites.csv')
+    print('===============================================')
+    df_binding_sites = self.__load_data(self.data_loc+'protein_features/binding_sites.csv')
+    
+    # Name the index to 'pid' to allow joining to other feaure files later.
+    df_binding_sites.index.name = 'pid'
+    
+    print('===============================================')
+    print('expasy.csv')
+    print('===============================================')
+    df_expasy = self.__load_data(self.data_loc+'protein_features/expasy.csv')
+    
+    print('===============================================')
+    print('profeat.csv')
+    print('===============================================')
+    df_profeat = self.__load_data(self.data_loc+'protein_features/profeat.csv')
+    
+    # Name the index to 'pid' to allow joining to other feaure files later.
+    df_profeat.index.name = 'pid'
+    
+    # profeat has some missing values.
+    s = df_profeat.isnull().sum(axis = 0)
+
+    print('number of missing values for each column containing them is: {}'.format(len(s[s > 0])))
+
+    # Drop the rows that have missing values.
+    df_profeat.dropna(inplace=True)
+    print('number of rows remaining, without NaNs: {:,}'.format(len(df_profeat)))
+    
+    return {'df_dragon_features': df_dragon_features,
+           'df_fingerprints': df_fingerprints,
+           'df_binding_sites': df_binding_sites,
+           'df_expasy': df_expasy,
+           'df_profeat': df_profeat}
+
+
+  def __create_features(self, split_file_name, out_file_name, feature_sets):
+    print('===============================================')
+    print('interactions.csv')
+    print('===============================================')
+    
+    # load interactions.csv
+    df_interactions = self.__load_data(
+      self.data_loc+'training_validation_split/' + split_file_name)
+
+    # Rename the 'canonical_cid' column simply to 'cid' to simplifiy joining to the other feature sets later.
+    df_interactions.rename(columns={"canonical_cid": "cid"}, inplace=True)
+    print(df_interactions.head())
+    
+    # Get the individual feature sets
+    df_dragon_features = feature_sets['df_dragon_features']
+    df_fingerprints = feature_sets['df_fingerprints']
+    df_binding_sites = feature_sets['df_binding_sites']
+    df_expasy = feature_sets['df_expasy']
+    df_profeat = feature_sets['df_profeat']
+    
+    print('\n\n===============================================')
+    print('Join the data using {}\n'.format(split_file_name))
+    print('===============================================')
+    
+    # Form the complete feature set by joining the data frames according to _cid_ and _pid_.
+    # See the data readme in the Gitbug repository:
+    # https://github.com/BrianDavisMath/FDA-COVID19/tree/master/data.
+    
+    # By convention, the file features should be concatenated in the following order (for consistency):
+    # **binding_sites**, **expasy**, **profeat**, **dragon_features**, **fingerprints**.
+    
+    print('\n\n-----------------------------------------------')
+    print('df_interactions + df_binding_sites = df_features \n')
+    df_features = pd.merge(df_interactions, df_binding_sites, on='pid', how='inner')
+    self.__print_merge_details(df_features, 'interactions', 'binding_sites')
+    
+    print('\n\n-----------------------------------------------')
+    print('df_features + df_expasy \n')
+    df_features = pd.merge(df_features, df_expasy, on='pid', how='inner')
+    self.__print_merge_details(df_features, 'features', 'expasy')
+    
+    print('\n\n-----------------------------------------------')
+    print('df_features + df_profeat \n')
+    df_features = pd.merge(df_features, df_profeat, on='pid', how='inner')
+    self.__print_merge_details(df_features, 'features', 'df_profeat')
+    
+    print('\n\n-----------------------------------------------')
+    print('df_features + df_dragon_features \n')
+    df_dragon_features.index.name = 'cid'
+    df_features = pd.merge(df_features, df_dragon_features, on='cid', how='inner')
+    self.__print_merge_details(df_features, 'features', 'df_dragon_features')
+    
+    print('\n\n-----------------------------------------------')
+    print('df_features + df_fingerprints \n')
+    df_features = pd.merge(df_features, df_fingerprints, on='cid', how='inner')
+    self.__print_merge_details(df_features, 'features', 'df_fingerprints')
+    
+    print('\n\n-----------------------------------------------')
+    print('Number of rows in joined feature set: {:,}\n'.format(len(df_features)))
+    print('Number of columns in joined feature set: {:,}\n'.format(len(df_features.columns)))
+    
+    # release memory used by previous dataframes.
+    del df_interactions
+    del df_binding_sites
+    del df_expasy
+    del df_profeat
+    del df_dragon_features
+    del df_fingerprints
+    
+    # Save features to file
+    store = pd.HDFStore(self.data_loc + out_file_name)
+    store['df'] = df_features
+    store.close()
+
 
   # train an XGBoost model and use an internal split for evaluation.
   def __train(self, X, Y, xgb=None, sample_weight=None):
@@ -306,41 +505,46 @@ def main(argv):
   validation_features = None
   max_activity_threshold = None
   activity_threshold_step = None
+  data_folder = 'data/'
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:",["athresh=", "step="])
+    opts, args = getopt.getopt(argv,"ha:s:f:",["athresh=", "step=", "data="])
   except getopt.GetoptError:
     print('\n\njob.py -a \
-<max_activity_threshold> -s <activity_threshold_step>\n\n')
+<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>\n\n')
     sys.exit(2)
 
-  if len(opts) != 2:
+  if len(opts) < 2:
     print('\n\njob.py -a \
-<max_activity_threshold> -s <activity_threshold_step>\n\n')
+<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>\n\n')
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
       print('\n\njob.py -a \
-<max_activity_threshold> -s <activity_threshold_step>\n\n')
+<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
       max_activity_threshold = arg
     elif opt in ("-s", "--step"):
       activity_threshold_step = arg
+    elif opt in ("-f", "--v"):
+      data_folder = arg
 
   if max_activity_threshold is None or activity_threshold_step is None:
     print('job.py -a \
-<max_activity_threshold> -s <activity_threshold_step>')
+<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>')
     sys.exit()
 
   print('\n\nmax_activity_threshold is {}'.format(max_activity_threshold))
-  print('activity_threshold_step is {}\n\n'.format(activity_threshold_step))
+  print('activity_threshold_step is {}'.format(activity_threshold_step))
+  print('data_folder is {}\n\n'.format(data_folder))
 
   xgb = XGBoostClassifier(
     max_activity_threshold=max_activity_threshold,
-    activity_threshold_step=activity_threshold_step)
+    activity_threshold_step=activity_threshold_step,
+    data_folder=data_folder)
 
 
 if __name__== "__main__":
