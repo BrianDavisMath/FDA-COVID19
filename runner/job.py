@@ -77,6 +77,8 @@ warnings.filterwarnings('ignore')
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
 
 from xgboost import XGBClassifier
 
@@ -109,6 +111,13 @@ class XGBoostClassifier():
       self.validation_features = self.__create_features('validation_interactions.csv', 
         'validation_features.h5', self.feature_sets)
 
+      # get the validation features
+      # TODO: pass the following in instead of loading it on each call
+      store = pd.HDFStore(self.data_loc + 'validation_features.h5')
+      df_validation = pd.DataFrame(store['df' ])
+      store.close()
+      print('\n\ndf_validation - rows: {:,}, columns: {:,}\n\n'.format(len(df_validation), len(df_validation.columns)))
+
       # Iterate over activity thresholds and produce results for each one
       activity_threshold = self.max_activity_threshold
       while activity_threshold > 0.0:
@@ -137,15 +146,40 @@ class XGBoostClassifier():
         X.columns = list(range(0, len(X.columns)))
 
         # train
-        xgb = self.__train(X, Y, xgb=self.__get_xgb())
+        sample_weight = df_features['sample_activity_score']
+        xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
         # get features
-        xgb_features = self.__get_features(xgb)
+        xgb_features = self.__get_features(xgb, df_features)
         print('number of most important features: {:,}'.format(len(xgb_features)))
 
+        # cid set with subset of features derived from previous cid/pid combined dimension reduction
+        drug_column_names = self.__get_drug_column_names()
+        top_feature_cols = list(xgb_features['feature'].values)
+        cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
+        df_drugs = df_features[['activity', 'sample_activity_score']+cid_features]
+        print('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
+        print('\ncid features:\n')
+        print(df_drugs.head())
 
+        # pid set with subset of features derived from previous cid/pid combined dimension reduction
+        protein_column_names = self.__get_protein_column_names()
+        pid_features = [col for col in top_feature_cols if col in protein_column_names]
+        df_proteins = df_features[['activity', 'sample_activity_score']+pid_features]
+        print('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
+        print('\npid features:\n')
+        print(df_proteins.head())
 
+        # Run models
+        print('cid/pid combined with activity score weighting, results:\n')
+        combined_model = self.__train_and_eval_with_weights(df_features, df_validation)
+
+        print('\ncid with activity score weighting, results:\n')
+        drugs_model = self.__train_and_eval_with_weights(df_drugs, df_validation)
+
+        print('\npid combined with activity score weighting, results:\n')
+        proteins_model = self.__train_and_eval_with_weights(df_proteins, df_validation)
 
         activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
 
@@ -354,9 +388,17 @@ class XGBoostClassifier():
 
   # Get feature importance as information gain 
   # (the improvement in accuracy brought by a feature) from an XGBoost model.
-  def __get_features(self, model):
+  def __get_features(self, model, df_features):
     gain_importance = model.get_booster().get_score(importance_type="gain")
-    return [int(key) for key in gain_importance.keys()]
+    feature_indices = [int(key) for key in gain_importance.keys()]
+
+    df = df_features.copy()
+    self.__drop_non_features(df)
+    top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
+    del df
+
+    return pd.DataFrame({'feature': top_feature_cols, 
+      'importance': list(gain_importance.values())}, columns = ['feature', 'importance'])
 
   # calculate the sample weights used for the F1 Score
   # TODO: Brian to write documentation for this:
@@ -402,23 +444,15 @@ class XGBoostClassifier():
         df.drop('sample_activity_score', axis=1, inplace=True)
 
   # load test data and gather metrics
-  def __gather_metrics(self, df_in, model):
-    
-
-    # TODO: pass the following in instead of loading it on each call
-    store = pd.HDFStore(self.data_loc + 'validation_features.h5')
-    df_test_features = pd.DataFrame(store['df' ])
-    store.close()
-    print('rows: {:,}, columns: {:,}'.format(len(df_test_features), len(df_test_features.columns)))
-
+  def __gather_metrics(self, df_in, model, df_validation):
     # Take only the reduced set of columns.
-    df_test_features = df_test_features[df_in.columns.tolist()]
+    df_validation = df_validation[df_in.columns.tolist()]
 
-    print('rows: {:,}, columns: {:,}'.format(len(df_test_features), len(df_test_features.columns)))
+    print('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
 
     # accuracy, precision and recall
-    y_test = df_test_features['activity'].values
-    df = df_test_features.copy()
+    y_test = df_validation['activity'].values
+    df = df_validation.copy()
     self.__drop_non_features(df)
     X_test = df
 
@@ -427,11 +461,9 @@ class XGBoostClassifier():
     # make predictions for test data
     y_pred = model.predict(X_test)
 
-    from sklearn.metrics import confusion_matrix
-
     cm = confusion_matrix(y_test, y_pred)
 
-    print("Accuracy = {:0.2f}%".format(sum(diag(cm))/sum(cm)*100))
+    print("Accuracy = {:0.2f}%".format(sum(np.diag(cm))/cm.sum()*100))
     print("Precision = {:0.2f}%".format(cm[1][1]/sum(cm[:, 1])*100))
     print("Recall = {:0.2f}%".format(cm[1][1]/sum(cm[1, :])*100))
 
@@ -442,8 +474,8 @@ class XGBoostClassifier():
     self.__drop_non_features(training_features_active)
     self.__drop_non_features(training_features_inactive)
 
-    validation_features_active = df_test_features[df_test_features['activity']==1]
-    validation_features_inactive = df_test_features[df_test_features['activity']==0]
+    validation_features_active = df_validation[df_validation['activity']==1]
+    validation_features_inactive = df_validation[df_validation['activity']==0]
     
     self.__drop_non_features(validation_features_active)
     self.__drop_non_features(validation_features_inactive)
@@ -454,7 +486,7 @@ class XGBoostClassifier():
         validation_features_active, 
         validation_features_inactive)
 
-    assert(len(inactive_weights) + len(active_weights) == len(df_test_features))
+    assert(len(inactive_weights) + len(active_weights) == len(df_validation))
 
     df_validation_features = validation_features_active.append(validation_features_inactive)
 
@@ -495,9 +527,9 @@ class XGBoostClassifier():
 
   # load protein data column names
   def __get_protein_column_names(self):
-    pid_binding_sites = get_csv_feature_names('protein_features/binding_sites.csv')
-    pid_expasy = get_csv_feature_names('protein_features/expasy.csv')
-    pid_profeat = get_csv_feature_names('protein_features/profeat.csv')
+    pid_binding_sites = self.__get_csv_feature_names('protein_features/binding_sites.csv')
+    pid_expasy = self.__get_csv_feature_names('protein_features/expasy.csv')
+    pid_profeat = self.__get_csv_feature_names('protein_features/profeat.csv')
 
     pid_features = pid_binding_sites + pid_expasy + pid_profeat
     print()
@@ -516,7 +548,7 @@ class XGBoostClassifier():
     return xgb
 
   # Model for combined cid/pid features using activity scores as sample weights.
-  def __train_and_eval_with_weights(self, df_in):
+  def __train_and_eval_with_weights(self, df_in, df_validation):
     Y = df_in['activity'].values
     df = df_in.copy()
     self.__drop_non_features(df)
@@ -530,12 +562,12 @@ class XGBoostClassifier():
     del df
 
     # load test data and gather metrics
-    self.__gather_metrics(df_in, model)
+    self.__gather_metrics(df_in, model, df_validation)
     return model
 
 
   # Model for combined cid/pid features NOT using activity scores as sample weights.
-  def __train_and_eval(self, df_in):
+  def __train_and_eval(self, df_in, df_validation):
     Y = df_in['activity'].values
     df = df_in.copy()
     self.__drop_non_features(df)
@@ -548,7 +580,7 @@ class XGBoostClassifier():
     del df
 
     # load test data and gather metrics
-    self.__gather_metrics(df_in, model)
+    self.__gather_metrics(df_in, model, df_validation)
     return model
 
 
