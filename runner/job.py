@@ -15,14 +15,20 @@ by an activity threshold. [Brian to document how that is calculated]
 
 Inputs are:
   
-  max_activity_threshold - used to sub-sample the training data for the
+  [-a] max_activity_threshold - used to sub-sample the training data for the
   first run
 
-  activity_threshold_step - the amount to reduced the activity threshold
+  [-s] activity_threshold_step - the amount to reduced the activity threshold
   on each run before sub-sampling the training data
 
-  data_folder - default /data. Specifies the location of the data from which the
+  [-f] data_folder - default /data. Specifies the location of the data from which the
   features will be selected.
+
+  [-d] use_dimension_reduction_weights - [True|False] whether to use sample_activity_score 
+  for sample_weight when training XGBoost for feature selection
+
+  [-t] use_training_weights - [True|False] whether to use sample_activity_score 
+  for sample_weight when training XGBoost for activity classification
 
 
 Outputs:
@@ -63,7 +69,7 @@ Data folder:
 
 Example call to run program:
 
-  python job.py -a 0.05 -s 0.01
+  job.py -a 0.05 -s 0.01 -f test_data/ -d False -t False
 
 '''
 import sys, getopt
@@ -88,7 +94,9 @@ class XGBoostClassifier():
     self, 
     max_activity_threshold, 
     activity_threshold_step,
-    data_folder):
+    data_folder,
+    use_dimension_reduction_weights,
+    use_training_weights):
       self.max_activity_threshold = float(max_activity_threshold)
       self.activity_threshold_step = float(activity_threshold_step)
       self.data_loc = data_folder
@@ -146,7 +154,9 @@ class XGBoostClassifier():
         X.columns = list(range(0, len(X.columns)))
 
         # train
-        sample_weight = df_features['sample_activity_score']
+        sample_weight = None
+        if use_dimension_reduction_weights == True:
+          sample_weight = df_features['sample_activity_score']
         xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
         # get features
@@ -173,13 +183,13 @@ class XGBoostClassifier():
 
         # Run models
         print('cid/pid combined with activity score weighting, results:\n')
-        combined_model = self.__train_and_eval_with_weights(df_features, df_validation)
+        combined_model = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
 
         print('\ncid with activity score weighting, results:\n')
-        drugs_model = self.__train_and_eval_with_weights(df_drugs, df_validation)
+        drugs_model = self.__train_and_eval(df_drugs, df_validation, use_weights=use_training_weights)
 
         print('\npid combined with activity score weighting, results:\n')
-        proteins_model = self.__train_and_eval_with_weights(df_proteins, df_validation)
+        proteins_model = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
 
         activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
 
@@ -548,7 +558,7 @@ class XGBoostClassifier():
     return xgb
 
   # Model for combined cid/pid features using activity scores as sample weights.
-  def __train_and_eval_with_weights(self, df_in, df_validation):
+  def __train_and_eval(self, df_in, df_validation, use_weights=True):
     Y = df_in['activity'].values
     df = df_in.copy()
     self.__drop_non_features(df)
@@ -557,26 +567,11 @@ class XGBoostClassifier():
 
     xgb = self.__get_xgb()
 
-    sample_weight = df_in['sample_activity_score']
+    sample_weight = None
+    if use_weights == True:
+      sample_weight = df_in['sample_activity_score']
+
     model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
-    del df
-
-    # load test data and gather metrics
-    self.__gather_metrics(df_in, model, df_validation)
-    return model
-
-
-  # Model for combined cid/pid features NOT using activity scores as sample weights.
-  def __train_and_eval(self, df_in, df_validation):
-    Y = df_in['activity'].values
-    df = df_in.copy()
-    self.__drop_non_features(df)
-    X = df
-    X.columns = list(range(0, len(X.columns)))
-
-    xgb = self.__get_xgb()
-
-    model = self.__train(X, Y, xgb=xgb)
     del df
 
     # load test data and gather metrics
@@ -590,45 +585,57 @@ def main(argv):
   max_activity_threshold = None
   activity_threshold_step = None
   data_folder = 'data/'
+  use_dimension_reduction_weights = 'True'
+  use_training_weights = 'True'
+
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:f:",["athresh=", "step=", "data="])
+    opts, args = getopt.getopt(argv,"ha:s:f:d:t:",["athresh=", "step=", "data=", "dweights=", "tweights="])
   except getopt.GetoptError:
-    print('\n\njob.py -a \
-<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>\n\n')
+    print('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
-    print('\n\njob.py -a \
-<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>\n\n')
+    print('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
-      print('\n\njob.py -a \
-<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>\n\n')
+      print('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
       max_activity_threshold = arg
     elif opt in ("-s", "--step"):
       activity_threshold_step = arg
-    elif opt in ("-f", "--v"):
+    elif opt in ("-f", "--data"):
       data_folder = arg
+    elif opt in ("-d", "--dweights"):
+      use_dimension_reduction_weights = arg
+    elif opt in ("-t", "--tweights"):
+      use_training_weights = arg
+
+
 
   if max_activity_threshold is None or activity_threshold_step is None:
-    print('job.py -a \
-<max_activity_threshold> -s <activity_threshold_step> -f <data_folder>')
+    print('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
     sys.exit()
 
   print('\n\nmax_activity_threshold is {}'.format(max_activity_threshold))
   print('activity_threshold_step is {}'.format(activity_threshold_step))
-  print('data_folder is {}\n\n'.format(data_folder))
+  print('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
+  print('use_training_weights is {}\n\n'.format(use_training_weights=='True'))
 
   xgb = XGBoostClassifier(
     max_activity_threshold=max_activity_threshold,
     activity_threshold_step=activity_threshold_step,
-    data_folder=data_folder)
+    data_folder=data_folder, 
+    use_dimension_reduction_weights=use_dimension_reduction_weights=='True',
+    use_training_weights=use_training_weights=='True')
 
 
 if __name__== "__main__":
