@@ -243,7 +243,7 @@ class XGBoostClassifier():
     # less of these values and retain them, throwing away the rest. 
     # Then mean-impute the "na" values in the remaining columns.
     pct_threshold = 2
-    na_threshold = int(91424*pct_threshold/100)
+    na_threshold = int(len(df_dragon_features)*pct_threshold/100)
     ok_cols = []
     for col in df_dragon_features:
         na_count = df_dragon_features[col].value_counts().get('na')
