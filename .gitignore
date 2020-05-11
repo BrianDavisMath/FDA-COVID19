@@ -7,7 +7,6 @@ FDA_COVID19_dataset_tmp
 FDA-COVID19_files_*
 data/training_validation_split/
 data/*.zip
-runner/training_features.h5
-runner/validation_features.h5
+runner/data/*
 .ipynb_checkpoints/
 __MACOSX/
