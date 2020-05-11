@@ -101,6 +101,8 @@ class XGBoostClassifier():
       self.activity_threshold_step = float(activity_threshold_step)
       self.data_loc = data_folder
 
+      self.bad_dragon_cols = []
+
       # XGBoost parameters
       self.learning_rate=0.02
       self.n_estimators=600
@@ -245,10 +247,13 @@ class XGBoostClassifier():
     pct_threshold = 2
     na_threshold = int(len(df_dragon_features)*pct_threshold/100)
     ok_cols = []
+
     for col in df_dragon_features:
         na_count = df_dragon_features[col].value_counts().get('na')
         if (na_count or 0) <= na_threshold:
             ok_cols.append(col)
+        else:
+            self.bad_dragon_cols.append(col)
 
     print('number of columns where the frequency of "na" values is <= {}%: {}.'.format(pct_threshold, len(ok_cols)))
     
@@ -519,12 +524,8 @@ class XGBoostClassifier():
     # We renamed the dragon features columns in the greg-features notebook.
     cid_dragon_features = ['cid_'+col for col in cid_dragon_features]
 
-
-
-    # TODO: retain these calls from the intial feature-stitching code
-
     # We dropped columns that are < 2% filled with values in the greg-features notebook.
-    empty_cols = ['cid_X0v', 'cid_X5A', 'cid_Psi_i_s', 'cid_SM6_B(s)', 'cid_Psychotic-80', 'cid_VE1sign_L', 'cid_X5sol', 'cid_Psi_e_1d', 'cid_X2Av', 'cid_ATS1s', 'cid_SpMin1_Bh(s)', 'cid_GATS3s', 'cid_SpMin8_Bh(s)', 'cid_MATS6s', 'cid_VR2_B(s)', 'cid_X1Av', 'cid_Ro5', 'cid_MLOGP', 'cid_SpMin6_Bh(s)', 'cid_ATSC3s', 'cid_VE3sign_D/Dt', 'cid_SpPos_B(s)', 'cid_GATS4s', 'cid_X1Kup', 'cid_X3sol', 'cid_EE_Dt', 'cid_X2sol', 'cid_ATS4s', 'cid_DLS_01', 'cid_SpMax4_Bh(s)', 'cid_WiA_B(s)', 'cid_Chi_B(s)', 'cid_Neoplastic-80', 'cid_ATSC4s', 'cid_DLS_07', 'cid_VR3_L', 'cid_SpMax6_Bh(s)', 'cid_Inflammat-50', 'cid_XMOD', 'cid_SpAbs_B(s)', 'cid_ATS6s', 'cid_VE3sign_D', 'cid_X5', 'cid_VR1_L', 'cid_MATS5s', 'cid_X3A', 'cid_SpAD_B(s)', 'cid_ATSC6s', 'cid_VE3sign_Dz(m)', 'cid_X0', 'cid_Psi_e_1', 'cid_X3v', 'cid_EE_D', 'cid_MLOGP2', 'cid_MATS2s', 'cid_EE_Dz(i)', 'cid_VE3sign_L', 'cid_CMC-80', 'cid_LLS_01', 'cid_X5v', 'cid_X4A', 'cid_PJI2', 'cid_Hypertens-80', 'cid_VE2sign_L', 'cid_X0A', 'cid_SpMax8_Bh(s)', 'cid_X1v', 'cid_VE2_B(s)', 'cid_X0sol', 'cid_EE_B(s)', 'cid_X5Av', 'cid_BLTA96', 'cid_Psi_i_0d', 'cid_VE3sign_Dz(p)', 'cid_GATS6s', 'cid_VR1_B(s)', 'cid_VE3_B(s)', 'cid_EE_Dz(p)', 'cid_MATS3s', 'cid_ATS5s', 'cid_X3Av', 'cid_VE3sign_Dz(i)', 'cid_SpMAD_B(s)', 'cid_VE1_B(s)', 'cid_ATS8s', 'cid_SpMax3_Bh(s)', 'cid_X1', 'cid_DLS_cons', 'cid_Hypnotic-80', 'cid_DLS_04', 'cid_SpMaxA_B(s)', 'cid_VE3sign_B(s)', 'cid_X1Mad', 'cid_SpMin4_Bh(s)', 'cid_MATS1s', 'cid_Psi_e_t', 'cid_Psi_i_0', 'cid_Infective-50', 'cid_DLS_05', 'cid_ChiA_B(s)', 'cid_X3', 'cid_SpMax_B(s)', 'cid_CMC-50', 'cid_BLI', 'cid_GATS5s', 'cid_VE3sign_Dz(e)', 'cid_VE1sign_B(s)', 'cid_VE2_L', 'cid_X4v', 'cid_SpMin5_Bh(s)', 'cid_DLS_06', 'cid_Depressant-80', 'cid_Psi_e_0', 'cid_ATS7s', 'cid_X1MulPer', 'cid_AMR', 'cid_ATS2s', 'cid_SM1_B(s)', 'cid_SM2_B(s)', 'cid_DLS_02', 'cid_ALOGP2', 'cid_Inflammat-80', 'cid_DLS_03', 'cid_ATSC5s', 'cid_GATS1s', 'cid_Psi_i_1s', 'cid_Infective-80', 'cid_X4', 'cid_EE_Dz(Z)', 'cid_RDCHI', 'cid_ATSC8s', 'cid_GATS8s', 'cid_EE_Dz(m)', 'cid_MATS8s', 'cid_Psi_e_0d', 'cid_SpMax7_Bh(s)', 'cid_VE1_L', 'cid_X2A', 'cid_VE2sign_B(s)', 'cid_cRo5', 'cid_BLTF96', 'cid_X4sol', 'cid_RDSQ', 'cid_GATS7s', 'cid_X2v', 'cid_Hypnotic-50', 'cid_VE3sign_Dz(v)', 'cid_Psi_i_A', 'cid_Psi_i_1', 'cid_HyWi_B(s)', 'cid_ATS3s', 'cid_VE3sign_X', 'cid_Wi_B(s)', 'cid_SM4_B(s)', 'cid_Psychotic-50', 'cid_J_B(s)', 'cid_X1A', 'cid_ATSC7s', 'cid_EE_Dz(e)', 'cid_SpMax1_Bh(s)', 'cid_Hypertens-50', 'cid_GATS2s', 'cid_X2', 'cid_VE3_L', 'cid_SpMax2_Bh(s)', 'cid_Psi_e_A', 'cid_Ho_B(s)', 'cid_SpMin3_Bh(s)', 'cid_AVS_B(s)', 'cid_VE3sign_Dt', 'cid_SpPosA_B(s)', 'cid_VR3_B(s)', 'cid_EE_Dz(v)', 'cid_MATS4s', 'cid_Psi_e_1s', 'cid_X1Per', 'cid_LLS_02', 'cid_X0Av', 'cid_X1sol', 'cid_Psi_i_t', 'cid_SpMax5_Bh(s)', 'cid_VE3sign_B(v)', 'cid_SM5_B(s)', 'cid_SpMin7_Bh(s)', 'cid_ALOGP', 'cid_X4Av', 'cid_SM3_B(s)', 'cid_ATSC1s', 'cid_Depressant-50', 'cid_SpMin2_Bh(s)', 'cid_BLTD48', 'cid_ATSC2s', 'cid_VE3sign_Dz(Z)', 'cid_SpDiam_B(s)', 'cid_Neoplastic-50', 'cid_Psi_i_1d', 'cid_VR2_L', 'cid_SpPosLog_B(s)', 'cid_MATS7s']
+    empty_cols = self.bad_dragon_cols
     cid_dragon_features = [col for col in cid_dragon_features if col not in empty_cols]
 
     cid_fingerprints = self.__get_csv_feature_names('drug_features/fingerprints.csv')
