@@ -79,6 +79,7 @@ Example call to run program:
   the training data, are 0.02 and 0.01. The corresponding run_ids will be 0 and 1.
 
 '''
+import logging
 import sys, getopt
 import os
 import pandas as pd
@@ -96,6 +97,11 @@ from sklearn.metrics import f1_score
 
 from xgboost import XGBClassifier
 
+logging.basicConfig(filename='job.log',level=logging.DEBUG)
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+logging.getLogger().addHandler(ch)
+
 class XGBoostClassifier():
     
   def __init__(
@@ -105,6 +111,7 @@ class XGBoostClassifier():
     data_folder,
     use_dimension_reduction_weights,
     use_training_weights):
+
       self.max_activity_threshold = float(max_activity_threshold)
       self.activity_threshold_step = float(activity_threshold_step)
       self.data_loc = data_folder
@@ -134,9 +141,9 @@ class XGBoostClassifier():
       df_validation = pd.DataFrame(store['df' ])
       store.close()
 
-      print('\n\n Validation features:')
-      print(df_validation.head())
-      print('\n\ndf_validation - rows: {:,}, columns: {:,}\n\n'.format(len(df_validation), len(df_validation.columns)))
+      logging.debug('\n\n Validation features:')
+      logging.debug(df_validation.head())
+      logging.debug('\n\ndf_validation - rows: {:,}, columns: {:,}\n\n'.format(len(df_validation), len(df_validation.columns)))
 
       # Iterate over activity thresholds and produce results for each one
       activity_threshold = self.max_activity_threshold
@@ -147,19 +154,19 @@ class XGBoostClassifier():
       thresholds = []
       while activity_threshold > 0.0:
         df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
-        print('\n\nsample_activity_score ({}) features shape: {}'
+        logging.debug('\n\nsample_activity_score ({}) features shape: {}'
           .format(activity_threshold, df_features.shape))
 
         # drop zero-variance columns
         var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
         df = df_features[var_cols].copy()
 
-        print('Dropped {:,} columns that have zero variance.'.format(len(df_features.columns)-len(var_cols)))
+        logging.debug('Dropped {:,} columns that have zero variance.'.format(len(df_features.columns)-len(var_cols)))
 
         del df_features
         df_features = df
 
-        print('Shape after dropping zero-variance columns - rows: {:,}, columns: {:,}'.
+        logging.debug('Shape after dropping zero-variance columns - rows: {:,}, columns: {:,}'.
           format(len(df_features), len(df_features.columns)))
 
 
@@ -167,7 +174,7 @@ class XGBoostClassifier():
         Y = df_features['activity'].values
         X = df_features.copy()
         self.__drop_non_features(X)
-        print('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
+        logging.debug('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
         X.columns = list(range(0, len(X.columns)))
 
         # train
@@ -179,7 +186,7 @@ class XGBoostClassifier():
         # get features
         xgb_features = self.__get_features(xgb, df_features)
         top_feature_cols = list(xgb_features['feature'].values)
-        print('number of most important features: {:,}'.format(len(xgb_features)))
+        logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
         df = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+top_feature_cols]
         del df_features
         df_features = df
@@ -189,26 +196,26 @@ class XGBoostClassifier():
         cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
         df_drugs = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+cid_features]
-        print('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
-        print('\ncid features:\n')
-        print(df_drugs.head())
+        logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
+        logging.debug('\ncid features:\n')
+        logging.debug(df_drugs.head())
 
         # pid set with subset of features derived from previous cid/pid combined dimension reduction
         protein_column_names = self.__get_protein_column_names()
         pid_features = [col for col in top_feature_cols if col in protein_column_names]
         df_proteins = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+pid_features]
-        print('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
-        print('\npid features:\n')
-        print(df_proteins.head())
+        logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
+        logging.debug('\npid features:\n')
+        logging.debug(df_proteins.head())
 
         # Run models
-        print('cid/pid combined with activity score weighting, results:\n')
+        logging.debug('cid/pid combined with activity score weighting, results:\n')
         combined_model_results = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
 
-        print('\ncid with activity score weighting, results:\n')
+        logging.debug('\ncid with activity score weighting, results:\n')
         drugs_model_results = self.__train_and_eval(df_drugs, df_validation, use_weights=use_training_weights)
 
-        print('\npid combined with activity score weighting, results:\n')
+        logging.debug('\npid combined with activity score weighting, results:\n')
         proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
 
         combined_results.append(combined_model_results)
@@ -392,8 +399,8 @@ class XGBoostClassifier():
     df_validation.reset_index(inplace=True, drop=True)
     validation_weights = combined_model_results['validation_weights']
 
-    print('validation observations:\n\n')
-    print(df_validation.head())
+    logging.debug('validation observations:\n\n')
+    logging.debug(df_validation.head())
 
     results = []
 
@@ -438,9 +445,9 @@ class XGBoostClassifier():
     try:
       os.mkdir(path)
     except OSError:
-      print ("Creation of the directory %s failed" % path)
+      logging.debug ("Creation of the directory %s failed" % path)
     else:
-      print ("Successfully created the directory %s " % path)
+      logging.debug ("Successfully created the directory %s " % path)
 
     df.to_csv('results/results_{}.csv'.format(run_id), index=False)
     del df
@@ -452,31 +459,31 @@ class XGBoostClassifier():
         df = pd.read_csv(path, index_col=0, dtype=data_type)
     else:
         df = pd.read_csv(path, index_col=0)
-    print('Number of rows: {:,}\n'.format(len(df)))
-    print('Number of columns: {:,}\n'.format(len(df.columns)))
+    logging.debug('Number of rows: {:,}\n'.format(len(df)))
+    logging.debug('Number of columns: {:,}\n'.format(len(df.columns)))
     
     columns_missing_values = df.columns[df.isnull().any()].tolist()
-    print('{} columns with missing values\n\n'.format(len(columns_missing_values)))
+    logging.debug('{} columns with missing values\n\n'.format(len(columns_missing_values)))
     
     cols = df.columns.tolist()
     column_types = [{col: df.dtypes[col].name} for col in cols][:10]
-    print('column types:\n')
-    print(column_types, '\n\n')
-    print(df.head(2))
+    logging.debug('column types:\n')
+    logging.debug(column_types, '\n\n')
+    logging.debug(df.head(2))
     
     return df
 
   # print out summary after each features merge
   def __print_merge_details(self, df_merge_result, df1_name, df2_name):
-    print('Joining {} on protein {} yields {:,} rows and {:,} columns'. \
+    logging.debug('Joining {} on protein {} yields {:,} rows and {:,} columns'. \
           format(df1_name, df2_name, len(df_merge_result), 
           len(df_merge_result.columns)))
 
   # Get the individual feature sets as data frames
   def __load_feature_files(self):
-    print('===============================================')
-    print('\ndragon_features.csv')
-    print('===============================================')
+    logging.debug('===============================================')
+    logging.debug('\ndragon_features.csv')
+    logging.debug('===============================================')
     # note need to set the data_type to object because it complains, otherwise that the types vary.
     df_dragon_features = self.__load_data(self.data_loc+'drug_features/dragon_features.csv', data_type=object)
     
@@ -498,7 +505,7 @@ class XGBoostClassifier():
         else:
             self.bad_dragon_cols.append(col)
 
-    print('number of columns where the frequency of "na" values is <= {}%: {}.'.format(pct_threshold, len(ok_cols)))
+    logging.debug('number of columns where the frequency of "na" values is <= {}%: {}.'.format(pct_threshold, len(ok_cols)))
     
     df_dragon_features = df_dragon_features[ok_cols].copy()
 
@@ -506,35 +513,35 @@ class XGBoostClassifier():
     df_dragon_features = df_dragon_features.apply(pd.to_numeric, errors='coerce')
 
     columns_missing_values = df_dragon_features.columns[df_dragon_features.isnull().any()].tolist()
-    print('{} columns with missing values.\n\n'.format(len(columns_missing_values)))
+    logging.debug('{} columns with missing values.\n\n'.format(len(columns_missing_values)))
 
     # replace NaNs with column means
     df_dragon_features.fillna(df_dragon_features.mean(), inplace=True)
 
     columns_missing_values = df_dragon_features.columns[df_dragon_features.isnull().any()].tolist()
-    print('{} columns with missing values (after imputing): {}\n\n'.format(len(columns_missing_values), 
+    logging.debug('{} columns with missing values (after imputing): {}\n\n'.format(len(columns_missing_values), 
                                                                        columns_missing_values))
-    print('===============================================')
-    print('fingerprints.csv')
-    print('===============================================')
+    logging.debug('===============================================')
+    logging.debug('fingerprints.csv')
+    logging.debug('===============================================')
     df_fingerprints = self.__load_data(self.data_loc+'drug_features/fingerprints.csv')
     
-    print('===============================================')
-    print('binding_sites.csv')
-    print('===============================================')
+    logging.debug('===============================================')
+    logging.debug('binding_sites.csv')
+    logging.debug('===============================================')
     df_binding_sites = self.__load_data(self.data_loc+'protein_features/binding_sites.csv')
     
     # Name the index to 'pid' to allow joining to other feaure files later.
     df_binding_sites.index.name = 'pid'
     
-    print('===============================================')
-    print('expasy.csv')
-    print('===============================================')
+    logging.debug('===============================================')
+    logging.debug('expasy.csv')
+    logging.debug('===============================================')
     df_expasy = self.__load_data(self.data_loc+'protein_features/expasy.csv')
     
-    print('===============================================')
-    print('profeat.csv')
-    print('===============================================')
+    logging.debug('===============================================')
+    logging.debug('profeat.csv')
+    logging.debug('===============================================')
     df_profeat = self.__load_data(self.data_loc+'protein_features/profeat.csv')
     
     # Name the index to 'pid' to allow joining to other feaure files later.
@@ -543,11 +550,11 @@ class XGBoostClassifier():
     # profeat has some missing values.
     s = df_profeat.isnull().sum(axis = 0)
 
-    print('number of missing values for each column containing them is: {}'.format(len(s[s > 0])))
+    logging.debug('number of missing values for each column containing them is: {}'.format(len(s[s > 0])))
 
     # Drop the rows that have missing values.
     df_profeat.dropna(inplace=True)
-    print('number of rows remaining, without NaNs: {:,}'.format(len(df_profeat)))
+    logging.debug('number of rows remaining, without NaNs: {:,}'.format(len(df_profeat)))
     
     return {'df_dragon_features': df_dragon_features,
            'df_fingerprints': df_fingerprints,
@@ -557,9 +564,9 @@ class XGBoostClassifier():
 
 
   def __create_features(self, split_file_name, out_file_name, feature_sets):
-    print('===============================================')
-    print('interactions.csv')
-    print('===============================================')
+    logging.debug('===============================================')
+    logging.debug('interactions.csv')
+    logging.debug('===============================================')
     
     # load interactions.csv
     df_interactions = self.__load_data(
@@ -567,7 +574,7 @@ class XGBoostClassifier():
 
     # Rename the 'canonical_cid' column simply to 'cid' to simplifiy joining to the other feature sets later.
     df_interactions.rename(columns={"canonical_cid": "cid"}, inplace=True)
-    print(df_interactions.head())
+    logging.debug(df_interactions.head())
     
     # Get the individual feature sets
     df_dragon_features = feature_sets['df_dragon_features']
@@ -576,9 +583,9 @@ class XGBoostClassifier():
     df_expasy = feature_sets['df_expasy']
     df_profeat = feature_sets['df_profeat']
     
-    print('\n\n===============================================')
-    print('Join the data using {}\n'.format(split_file_name))
-    print('===============================================')
+    logging.debug('\n\n===============================================')
+    logging.debug('Join the data using {}\n'.format(split_file_name))
+    logging.debug('===============================================')
     
     # Form the complete feature set by joining the data frames according to _cid_ and _pid_.
     # See the data readme in the Gitbug repository:
@@ -587,35 +594,35 @@ class XGBoostClassifier():
     # By convention, the file features should be concatenated in the following order (for consistency):
     # **binding_sites**, **expasy**, **profeat**, **dragon_features**, **fingerprints**.
     
-    print('\n\n-----------------------------------------------')
-    print('df_interactions + df_binding_sites = df_features \n')
+    logging.debug('\n\n-----------------------------------------------')
+    logging.debug('df_interactions + df_binding_sites = df_features \n')
     df_features = pd.merge(df_interactions, df_binding_sites, on='pid', how='inner')
     self.__print_merge_details(df_features, 'interactions', 'binding_sites')
     
-    print('\n\n-----------------------------------------------')
-    print('df_features + df_expasy \n')
+    logging.debug('\n\n-----------------------------------------------')
+    logging.debug('df_features + df_expasy \n')
     df_features = pd.merge(df_features, df_expasy, on='pid', how='inner')
     self.__print_merge_details(df_features, 'features', 'expasy')
     
-    print('\n\n-----------------------------------------------')
-    print('df_features + df_profeat \n')
+    logging.debug('\n\n-----------------------------------------------')
+    logging.debug('df_features + df_profeat \n')
     df_features = pd.merge(df_features, df_profeat, on='pid', how='inner')
     self.__print_merge_details(df_features, 'features', 'df_profeat')
     
-    print('\n\n-----------------------------------------------')
-    print('df_features + df_dragon_features \n')
+    logging.debug('\n\n-----------------------------------------------')
+    logging.debug('df_features + df_dragon_features \n')
     df_dragon_features.index.name = 'cid'
     df_features = pd.merge(df_features, df_dragon_features, on='cid', how='inner')
     self.__print_merge_details(df_features, 'features', 'df_dragon_features')
     
-    print('\n\n-----------------------------------------------')
-    print('df_features + df_fingerprints \n')
+    logging.debug('\n\n-----------------------------------------------')
+    logging.debug('df_features + df_fingerprints \n')
     df_features = pd.merge(df_features, df_fingerprints, on='cid', how='inner')
     self.__print_merge_details(df_features, 'features', 'df_fingerprints')
     
-    print('\n\n-----------------------------------------------')
-    print('Number of rows in joined feature set: {:,}\n'.format(len(df_features)))
-    print('Number of columns in joined feature set: {:,}\n'.format(len(df_features.columns)))
+    logging.debug('\n\n-----------------------------------------------')
+    logging.debug('Number of rows in joined feature set: {:,}\n'.format(len(df_features)))
+    logging.debug('Number of columns in joined feature set: {:,}\n'.format(len(df_features.columns)))
     
     # release memory used by previous dataframes.
     del df_interactions
@@ -677,14 +684,14 @@ class XGBoostClassifier():
   # get only the feature names from a csv file
   def __get_csv_feature_names(self, file):
     columns = pd.read_csv(self.data_loc + file, index_col=0, nrows=1).columns.tolist()
-    print('{}: columns: {:,}'.format(file, len(columns)))
+    logging.debug('{}: columns: {:,}'.format(file, len(columns)))
     return columns
 
   def __get_h5_feature_names(self, file):
     store = pd.HDFStore(self.data_loc + file)
     meta = store.select('df', start=1, stop=1)
     store.close()
-    print('{}: columns: {:,}'.format(file, len(meta.columns)))
+    logging.debug('{}: columns: {:,}'.format(file, len(meta.columns)))
     return list(meta.columns)
 
   def __drop_non_features(self, df):
@@ -706,7 +713,7 @@ class XGBoostClassifier():
     # Take only the reduced set of columns.
     df_validation = df_validation[df_in.columns.tolist()]
 
-    print('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
+    logging.debug('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
 
     # weighted F1 score
     training_features_active = df_in[df_in['activity']==1]
@@ -740,9 +747,9 @@ class XGBoostClassifier():
     precision = cm[1][1]/sum(cm[:, 1])*100
     recall = cm[1][1]/sum(cm[1, :])*100
 
-    print("Accuracy = {:0.2f}%".format(accuracy))
-    print("Precision = {:0.2f}%".format(precision))
-    print("Recall = {:0.2f}%".format(recall))
+    logging.debug("Accuracy = {:0.2f}%".format(accuracy))
+    logging.debug("Precision = {:0.2f}%".format(precision))
+    logging.debug("Recall = {:0.2f}%".format(recall))
 
     active_weights, inactive_weights = self.__get_validation_weights(
         training_features_active, 
@@ -756,10 +763,10 @@ class XGBoostClassifier():
 
     f1score = f1_score(y_test, y_pred, average='binary', sample_weight=weights)
 
-    print('F1 Score (weighted): {:0.2f}%'.format(f1score*100))
+    logging.debug('F1 Score (weighted): {:0.2f}%'.format(f1score*100))
     
     f1score_unweighted = f1_score(y_test, y_pred, average='binary')
-    print('F1 Score (unweighted): {:0.2f}%'.format(f1score_unweighted*100))
+    logging.debug('F1 Score (unweighted): {:0.2f}%'.format(f1score_unweighted*100))
     
     probabilities = model.predict_proba(X_test)
 
@@ -789,8 +796,7 @@ class XGBoostClassifier():
     cid_fingerprints = self.__get_csv_feature_names('drug_features/fingerprints.csv')
 
     cid_features = cid_dragon_features + cid_fingerprints
-    print()
-    print('{:,} drug featues'.format(len(cid_features)))
+    logging.debug('{:,} drug featues'.format(len(cid_features)))
     return cid_features
 
 
@@ -801,8 +807,7 @@ class XGBoostClassifier():
     pid_profeat = self.__get_csv_feature_names('protein_features/profeat.csv')
 
     pid_features = pid_binding_sites + pid_expasy + pid_profeat
-    print()
-    print('{:,} protein featues'.format(len(pid_features)))
+    logging.debug('{:,} protein featues'.format(len(pid_features)))
     return pid_features
 
   def __get_xgb(self):
@@ -852,18 +857,18 @@ def main(argv):
   try:
     opts, args = getopt.getopt(argv,"ha:s:f:d:t:",["athresh=", "step=", "data=", "dweights=", "tweights="])
   except getopt.GetoptError:
-    print('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
+    logging.debug('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
-    print('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
+    logging.debug('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
-      print('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
+      logging.debug('\n\njob.py -a <max_activity_threshold> -s <activity_threshold_step> \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
@@ -878,16 +883,15 @@ def main(argv):
       use_training_weights = arg
 
 
-
   if max_activity_threshold is None or activity_threshold_step is None:
-    print('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
+    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>\n\n')
     sys.exit()
 
-  print('\n\nmax_activity_threshold is {}'.format(max_activity_threshold))
-  print('activity_threshold_step is {}'.format(activity_threshold_step))
-  print('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
-  print('use_training_weights is {}\n\n'.format(use_training_weights=='True'))
+  logging.debug('\n\nmax_activity_threshold is {}'.format(max_activity_threshold))
+  logging.debug('activity_threshold_step is {}'.format(activity_threshold_step))
+  logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
+  logging.debug('use_training_weights is {}\n\n'.format(use_training_weights=='True'))
 
   xgb = XGBoostClassifier(
     max_activity_threshold=max_activity_threshold,

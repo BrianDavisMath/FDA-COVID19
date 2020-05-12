@@ -11,5 +11,6 @@ runner/test_data/training_features.h5
 runner/test_data/validation_features.h5
 runner/data/*
 runner/results/
+runner/job.log
 .ipynb_checkpoints/
 __MACOSX/
