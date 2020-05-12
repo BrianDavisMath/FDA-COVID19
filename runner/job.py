@@ -134,6 +134,10 @@ class XGBoostClassifier():
       # Iterate over activity thresholds and produce results for each one
       activity_threshold = self.max_activity_threshold
       run_id = 0
+      combined_results = []
+      drugs_results = []
+      proteins_results = []
+      thresholds = []
       while activity_threshold > 0.0:
         df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
         print('\n\nsample_activity_score ({}) features shape: {}'
@@ -204,6 +208,10 @@ class XGBoostClassifier():
         del df_drugs
         del df_proteins
 
+        combined_results.append(combined_model_results)
+        drugs_results.append(drugs_model_results)
+        proteins_results.append(proteins_model_results)
+
         self.__results_to_csv(
           activity_threshold,
           run_id,
@@ -214,7 +222,16 @@ class XGBoostClassifier():
           proteins_model_results)
 
         run_id = run_id+1
+        thresholds.append(activity_threshold)
         activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
+
+      self.__params_and_metrics_to_csv(
+        thresholds,
+        use_dimension_reduction_weights,
+        use_training_weights,
+        combined_results,
+        drugs_results,
+        proteins_results)
 
 
   '''
@@ -223,6 +240,66 @@ class XGBoostClassifier():
   to create the training and validation sets.
   ==================================================================
   '''
+
+  # Write parameters and metrics to CSV for each run
+  def __params_and_metrics_to_csv(
+    self,
+    activity_thresholds,
+    used_dimension_reduction_weights,
+    used_training_weights,
+    combined_results,
+    drugs_results,
+    proteins_results):
+
+    results = []
+
+    for i in range(len(activity_thresholds)):
+      result = []
+      result.append(i)
+      result.append(activity_thresholds[i])
+      result.append(used_dimension_reduction_weights)
+      result.append(used_training_weights)
+
+      result.append(combined_results[i]['accuracy'])
+      result.append(combined_results[i]['precision'])
+      result.append(combined_results[i]['recall'])
+      result.append(combined_results[i]['f1_score_weighted'])
+      result.append(combined_results[i]['f1_score_unweighted'])
+
+      result.append(self.learning_rate)
+      result.append(self.n_estimators)
+      result.append(self.objective)
+      result.append(self.subsample)
+      result.append(self.min_child_weight)
+      result.append(self.max_depth)
+      result.append(self.gamma)
+      result.append(self.colsample_bytree)
+
+      results.append(result)
+
+    df = pd.DataFrame(results, columns=[
+      'run_id',
+      'run_threshold',
+      'used_dim_red_weights',
+      'used_training_weights',
+      'accuracy',
+      'precision',
+      'recall',
+      'f1_score_weighted',
+      'f1_score_unweighted',
+      'xgb_learning_rate',
+      'xgb_n_estimators',
+      'xgb_objective',
+      'xgb_subsample',
+      'xgb_min_child_weight',
+      'xgb_max_depth',
+      'xgb_gamma',
+      'xgb_colsample_bytree'
+      ])
+
+    df.to_csv('results/params_and_metrics.csv', index=False)
+    del df
+
 
   # Write modeling results to CSV
   def __results_to_csv(
@@ -264,15 +341,6 @@ class XGBoostClassifier():
       result.append(pid_only_probability)
       result.append(combined_probability)
 
-      result.append(self.learning_rate)
-      result.append(self.n_estimators)
-      result.append(self.objective)
-      result.append(self.subsample)
-      result.append(self.min_child_weight)
-      result.append(self.max_depth)
-      result.append(self.gamma)
-      result.append(self.colsample_bytree)
-
       results.append(result)
 
     df = pd.DataFrame(results, columns=[
@@ -287,15 +355,7 @@ class XGBoostClassifier():
       'validation_weight',
       'cid_only_predict_proba',
       'pid_only_predict_proba',
-      'combined_predict_proba',
-      'xgb_learning_rate',
-      'xgb_n_estimators',
-      'xgb_objective',
-      'xgb_subsample',
-      'xgb_min_child_weight',
-      'xgb_max_depth',
-      'xgb_gamma',
-      'xgb_colsample_bytree'
+      'combined_predict_proba'
       ])
 
     path = 'results'
