@@ -84,7 +84,6 @@ import sys, getopt
 import os
 import pandas as pd
 import numpy as np
-import h5py
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -137,9 +136,7 @@ class XGBoostClassifier():
         'validation_features.h5', self.feature_sets)
 
       # get the validation features
-      store = pd.HDFStore(self.data_loc + 'validation_features.h5')
-      df_validation = pd.DataFrame(store['df' ])
-      store.close()
+      df_validation = self.validation_features
 
       logging.debug(' Validation features:')
       logging.debug(df_validation.head())
