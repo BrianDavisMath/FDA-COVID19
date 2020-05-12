@@ -21,7 +21,7 @@ Inputs are:
   [-s] activity_threshold_step - the amount to reduced the activity threshold
   on each run before sub-sampling the training data
 
-  [-f] data_folder - default /data. Specifies the location of the data from which the
+  [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
   [-d] use_dimension_reduction_weights - [True|False] whether to use sample_activity_score 
@@ -33,16 +33,20 @@ Inputs are:
 
 Outputs:
 
-  results.csv - model outputs including binary classification for activity 
+  results_[run_id].csv - model outputs including binary classification for activity 
   as well as probability of activity for each cid/pid pair in the
   validation set;
 
-  metrics.csv - the accuracy, precision, recall, weighted and unweighted
-  F1 score representing model performane
+  params_and_metrics.csv - the accuracy, precision, recall, weighted and unweighted
+  F1 score representing model performane along with the XGBoost parameters used
 
-  important_features.csv - the set of most important features, along with
-  their information gain values, as returned by the first run of XGBoost.
-  These are the features that are selected for the classification pass.
+  feature_importances_[run_id].csv - the set of most important features, along with
+  their information gain values, as returned by the first run of XGBoost for dimension
+  reduction as well as for each classification (cid-only, pid-only and combined).
+
+  Note: all results files are written to a dynamically created **results folder**.
+  Also, **run_id** is a zero-based index of each run and corresponds to each unique
+  activity_threshold used in sampling the training data
 
 
 Data folder:
@@ -69,7 +73,10 @@ Data folder:
 
 Example call to run program:
 
-  job.py -a 0.05 -s 0.01 -f test_data/ -d False -t False
+  job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False
+
+  This will run two experiments where the activity threshold, used for sampling
+  the training data, are 0.02 and 0.01. The corresponding run_ids will be 0 and 1.
 
 '''
 import sys, getopt
@@ -204,10 +211,6 @@ class XGBoostClassifier():
         print('\npid combined with activity score weighting, results:\n')
         proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
 
-        del df_features
-        del df_drugs
-        del df_proteins
-
         combined_results.append(combined_model_results)
         drugs_results.append(drugs_model_results)
         proteins_results.append(proteins_model_results)
@@ -220,6 +223,20 @@ class XGBoostClassifier():
           combined_model_results,
           drugs_model_results,
           proteins_model_results)
+
+        self.__importance_to_csv(
+          run_id,
+          xgb_features,
+          combined_model_results['model'],
+          drugs_model_results['model'],
+          proteins_model_results['model'],
+          df_features,
+          df_drugs,
+          df_proteins)
+
+        del df_features
+        del df_drugs
+        del df_proteins
 
         run_id = run_id+1
         thresholds.append(activity_threshold)
@@ -240,6 +257,65 @@ class XGBoostClassifier():
   to create the training and validation sets.
   ==================================================================
   '''
+
+  # Write feature imprtances to file
+  def __importance_to_csv(
+    self,
+    run_id,
+    df_dimension_reduction_importances,
+    combined_model,
+    drugs_model,
+    proteins_model,
+    df_features,
+    df_drugs,
+    df_proteins):
+
+    results = []
+
+    df_drug_importance = self.__get_features(drugs_model, df_drugs)
+    df_protein_importance = self.__get_features(proteins_model, df_proteins)
+    df_combined_importance = self.__get_features(combined_model, df_features)
+
+    df_drug_importance.set_index('feature', inplace=True)
+    df_protein_importance.set_index('feature', inplace=True)
+    df_combined_importance.set_index('feature', inplace=True)
+
+    for index, row in df_dimension_reduction_importances.iterrows():
+      result = []
+      feature = row['feature']
+      result.append(run_id)
+      result.append(feature)
+      result.append(row['importance'])
+
+      if feature in df_combined_importance.index:
+        result.append(df_combined_importance.loc[feature]['importance'])
+      else:
+        result.append(0.0)
+
+      if feature in df_drug_importance.index:
+        result.append(df_drug_importance.loc[feature]['importance'])
+      else:
+        result.append(0.0)
+
+      if feature in df_protein_importance.index:
+        result.append(df_protein_importance.loc[feature]['importance'])
+      else:
+        result.append(0.0)
+
+      results.append(result)
+
+    df = pd.DataFrame(results, columns=[
+      'run_id',
+      'feature',
+      'dim_red importance',
+      'combined_classification',
+      'drug_classification',
+      'protein_classification'
+      ])
+
+    df.to_csv('results/feature_importances_{}.csv'.format(run_id), index=False)
+    del df
+
 
   # Write parameters and metrics to CSV for each run
   def __params_and_metrics_to_csv(
@@ -688,6 +764,7 @@ class XGBoostClassifier():
     probabilities = model.predict_proba(X_test)
 
     return {
+      'model': model,
       'probabilities': probabilities, 
       'validation_weights': weights,
       'df_validation': df_validation_features,
