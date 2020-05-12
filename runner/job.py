@@ -465,10 +465,6 @@ class XGBoostClassifier():
     columns_missing_values = df.columns[df.isnull().any()].tolist()
     logging.debug('{} columns with missing values'.format(len(columns_missing_values)))
     
-    cols = df.columns.tolist()
-    column_types = [{col: df.dtypes[col].name} for col in cols][:10]
-    logging.debug('column types:')
-    logging.debug(column_types, '')
     logging.debug(df.head(2))
     
     return df
