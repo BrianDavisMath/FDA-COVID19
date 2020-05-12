@@ -73,6 +73,7 @@ Example call to run program:
 
 '''
 import sys, getopt
+import os
 import pandas as pd
 import numpy as np
 import h5py
@@ -122,14 +123,17 @@ class XGBoostClassifier():
         'validation_features.h5', self.feature_sets)
 
       # get the validation features
-      # TODO: pass the following in instead of loading it on each call
       store = pd.HDFStore(self.data_loc + 'validation_features.h5')
       df_validation = pd.DataFrame(store['df' ])
       store.close()
+
+      print('\n\n Validation features:')
+      print(df_validation.head())
       print('\n\ndf_validation - rows: {:,}, columns: {:,}\n\n'.format(len(df_validation), len(df_validation.columns)))
 
       # Iterate over activity thresholds and produce results for each one
       activity_threshold = self.max_activity_threshold
+      run_id = 0
       while activity_threshold > 0.0:
         df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
         print('\n\nsample_activity_score ({}) features shape: {}'
@@ -163,14 +167,17 @@ class XGBoostClassifier():
 
         # get features
         xgb_features = self.__get_features(xgb, df_features)
+        top_feature_cols = list(xgb_features['feature'].values)
         print('number of most important features: {:,}'.format(len(xgb_features)))
+        df = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+top_feature_cols]
+        del df_features
+        df_features = df
 
         # cid set with subset of features derived from previous cid/pid combined dimension reduction
         drug_column_names = self.__get_drug_column_names()
-        top_feature_cols = list(xgb_features['feature'].values)
         cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
-        df_drugs = df_features[['activity', 'sample_activity_score']+cid_features]
+        df_drugs = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+cid_features]
         print('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
         print('\ncid features:\n')
         print(df_drugs.head())
@@ -178,21 +185,35 @@ class XGBoostClassifier():
         # pid set with subset of features derived from previous cid/pid combined dimension reduction
         protein_column_names = self.__get_protein_column_names()
         pid_features = [col for col in top_feature_cols if col in protein_column_names]
-        df_proteins = df_features[['activity', 'sample_activity_score']+pid_features]
+        df_proteins = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+pid_features]
         print('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
         print('\npid features:\n')
         print(df_proteins.head())
 
         # Run models
         print('cid/pid combined with activity score weighting, results:\n')
-        combined_model = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
+        combined_model_results = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
 
         print('\ncid with activity score weighting, results:\n')
-        drugs_model = self.__train_and_eval(df_drugs, df_validation, use_weights=use_training_weights)
+        drugs_model_results = self.__train_and_eval(df_drugs, df_validation, use_weights=use_training_weights)
 
         print('\npid combined with activity score weighting, results:\n')
-        proteins_model = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
+        proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
 
+        del df_features
+        del df_drugs
+        del df_proteins
+
+        self.__results_to_csv(
+          activity_threshold,
+          run_id,
+          use_dimension_reduction_weights,
+          use_training_weights,
+          combined_model_results,
+          drugs_model_results,
+          proteins_model_results)
+
+        run_id = run_id+1
         activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
 
 
@@ -202,6 +223,92 @@ class XGBoostClassifier():
   to create the training and validation sets.
   ==================================================================
   '''
+
+  # Write modeling results to CSV
+  def __results_to_csv(
+    self, 
+    threshold,
+    run_id,
+    used_dimension_reduction_weights,
+    used_training_weights,
+    combined_model_results,
+    drugs_model_results,
+    proteins_model_results):
+
+    df_validation = combined_model_results['df_validation']
+    df_validation.reset_index(inplace=True, drop=True)
+    validation_weights = combined_model_results['validation_weights']
+
+    print('validation observations:\n\n')
+    print(df_validation.head())
+
+    results = []
+
+    for index, row in df_validation.iterrows():
+      result = []
+      result.append(run_id)
+      result.append(threshold)
+      result.append(used_dimension_reduction_weights)
+      result.append(used_training_weights)
+      result.append(row['cid'])
+      result.append(row['pid'])
+      result.append(row['activity'])
+      result.append(row['sample_activity_score'])
+      result.append(validation_weights[index])
+
+      cid_only_probability = drugs_model_results['probabilities'][index][1]
+      pid_only_probability = proteins_model_results['probabilities'][index][1]
+      combined_probability = combined_model_results['probabilities'][index][1]
+
+      result.append(cid_only_probability)
+      result.append(pid_only_probability)
+      result.append(combined_probability)
+
+      result.append(self.learning_rate)
+      result.append(self.n_estimators)
+      result.append(self.objective)
+      result.append(self.subsample)
+      result.append(self.min_child_weight)
+      result.append(self.max_depth)
+      result.append(self.gamma)
+      result.append(self.colsample_bytree)
+
+      results.append(result)
+
+    df = pd.DataFrame(results, columns=[
+      'run_id',
+      'run_threshold',
+      'used_dim_red_weights',
+      'used_training_weights',
+      'cid',
+      'pid',
+      'activity',
+      'sample_activity_score',
+      'validation_weight',
+      'cid_only_predict_proba',
+      'pid_only_predict_proba',
+      'combined_predict_proba',
+      'xgb_learning_rate',
+      'xgb_n_estimators',
+      'xgb_objective',
+      'xgb_subsample',
+      'xgb_min_child_weight',
+      'xgb_max_depth',
+      'xgb_gamma',
+      'xgb_colsample_bytree'
+      ])
+
+    path = 'results'
+    try:
+      os.mkdir(path)
+    except OSError:
+      print ("Creation of the directory %s failed" % path)
+    else:
+      print ("Successfully created the directory %s " % path)
+
+    df.to_csv('results/results_{}.csv'.format(run_id), index=False)
+    del df
+
 
   # load a specific features CSV file
   def __load_data(self, path, data_type=None):
@@ -465,23 +572,6 @@ class XGBoostClassifier():
 
     print('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
 
-    # accuracy, precision and recall
-    y_test = df_validation['activity'].values
-    df = df_validation.copy()
-    self.__drop_non_features(df)
-    X_test = df
-
-    X_test.columns = list(range(0, len(X_test.columns)))
-
-    # make predictions for test data
-    y_pred = model.predict(X_test)
-
-    cm = confusion_matrix(y_test, y_pred)
-
-    print("Accuracy = {:0.2f}%".format(sum(np.diag(cm))/cm.sum()*100))
-    print("Precision = {:0.2f}%".format(cm[1][1]/sum(cm[:, 1])*100))
-    print("Recall = {:0.2f}%".format(cm[1][1]/sum(cm[1, :])*100))
-
     # weighted F1 score
     training_features_active = df_in[df_in['activity']==1]
     training_features_inactive = df_in[df_in['activity']==0]
@@ -491,9 +581,32 @@ class XGBoostClassifier():
 
     validation_features_active = df_validation[df_validation['activity']==1]
     validation_features_inactive = df_validation[df_validation['activity']==0]
-    
+
+    # Needed later for reporting
+    df_validation_features = validation_features_active.append(validation_features_inactive).copy()
+
+    y_test = df_validation_features['activity'].values
+
     self.__drop_non_features(validation_features_active)
     self.__drop_non_features(validation_features_inactive)
+
+    X_test = validation_features_active.append(validation_features_inactive)
+
+    # accuracy, precision and recall
+    X_test.columns = list(range(0, len(X_test.columns)))
+
+    # make predictions for test data
+    y_pred = model.predict(X_test)
+
+    cm = confusion_matrix(y_test, y_pred)
+
+    accuracy = sum(np.diag(cm))/cm.sum()*100
+    precision = cm[1][1]/sum(cm[:, 1])*100
+    recall = cm[1][1]/sum(cm[1, :])*100
+
+    print("Accuracy = {:0.2f}%".format(accuracy))
+    print("Precision = {:0.2f}%".format(precision))
+    print("Recall = {:0.2f}%".format(recall))
 
     active_weights, inactive_weights = self.__get_validation_weights(
         training_features_active, 
@@ -502,8 +615,6 @@ class XGBoostClassifier():
         validation_features_inactive)
 
     assert(len(inactive_weights) + len(active_weights) == len(df_validation))
-
-    df_validation_features = validation_features_active.append(validation_features_inactive)
 
     weights = list(active_weights) + list(inactive_weights)
 
@@ -514,7 +625,17 @@ class XGBoostClassifier():
     f1score_unweighted = f1_score(y_test, y_pred, average='binary')
     print('F1 Score (unweighted): {:0.2f}%'.format(f1score_unweighted*100))
     
-    return model.predict_proba(X_test)
+    probabilities = model.predict_proba(X_test)
+
+    return {
+      'probabilities': probabilities, 
+      'validation_weights': weights,
+      'df_validation': df_validation_features,
+      'accuracy': accuracy,
+      'precision': precision,
+      'recall': recall,
+      'f1_score_weighted': f1score,
+      'f1_score_unweighted': f1score_unweighted}
       
       
   # load drug data column names
@@ -576,8 +697,8 @@ class XGBoostClassifier():
     del df
 
     # load test data and gather metrics
-    self.__gather_metrics(df_in, model, df_validation)
-    return model
+    results = self.__gather_metrics(df_in, model, df_validation)
+    return results
 
 
 def main(argv):
