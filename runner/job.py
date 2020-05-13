@@ -153,7 +153,7 @@ class XGBoostClassifier():
       thresholds = []
 
       gc.collect()
-      
+
       while activity_threshold > 0.0:
         df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
         logging.debug('sample_activity_score ({}) features shape: {}'
@@ -249,6 +249,9 @@ class XGBoostClassifier():
         del df_features
         del df_drugs
         del df_proteins
+        del combined_model_results['model']
+        del drugs_model_results['model']
+        del proteins_model_results['model']
 
         run_id = run_id+1
         thresholds.append(activity_threshold)
