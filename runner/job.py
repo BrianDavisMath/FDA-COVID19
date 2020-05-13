@@ -73,7 +73,7 @@ Data folder:
 
 Example call to run program:
 
-  job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False
+  python job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False
 
   This will run two experiments where the activity threshold, used for sampling
   the training data, are 0.02 and 0.01. The corresponding run_ids will be 0 and 1.
@@ -82,6 +82,7 @@ Example call to run program:
 import logging
 import sys, getopt
 import os
+import gc
 import pandas as pd
 import numpy as np
 
@@ -116,6 +117,7 @@ class XGBoostClassifier():
       self.data_loc = data_folder
 
       self.bad_dragon_cols = []
+      self.non_feature_columns = ['index', 'activity', 'cid', 'pid', 'expanding_mean', 'sample_activity_score']
 
       # XGBoost parameters
       self.learning_rate=0.02
@@ -149,6 +151,9 @@ class XGBoostClassifier():
       drugs_results = []
       proteins_results = []
       thresholds = []
+
+      gc.collect()
+      
       while activity_threshold > 0.0:
         df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
         logging.debug('sample_activity_score ({}) features shape: {}'
@@ -156,7 +161,7 @@ class XGBoostClassifier():
 
         # drop zero-variance columns
         var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
-        df = df_features[var_cols].copy()
+        df = df_features[var_cols]
 
         logging.debug('Dropped {:,} columns that have zero variance.'.format(len(df_features.columns)-len(var_cols)))
 
@@ -169,8 +174,11 @@ class XGBoostClassifier():
 
         # Get important features using XGBoost
         Y = df_features['activity'].values
-        X = df_features.copy()
-        self.__drop_non_features(X)
+        X = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
+
+        print('\n\n X: \n\n')
+        print(X.head())
+
         logging.debug('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
         X.columns = list(range(0, len(X.columns)))
 
@@ -245,6 +253,7 @@ class XGBoostClassifier():
         run_id = run_id+1
         thresholds.append(activity_threshold)
         activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
+        gc.collect()
 
       self.__params_and_metrics_to_csv(
         thresholds,
@@ -500,7 +509,7 @@ class XGBoostClassifier():
 
     logging.debug('number of columns where the frequency of "na" values is <= {}%: {}.'.format(pct_threshold, len(ok_cols)))
     
-    df_dragon_features = df_dragon_features[ok_cols].copy()
+    df_dragon_features = df_dragon_features[ok_cols]
 
     # convert all values except "na"s to numbers and set "na" values to NaNs.
     df_dragon_features = df_dragon_features.apply(pd.to_numeric, errors='coerce')
@@ -645,10 +654,8 @@ class XGBoostClassifier():
     gain_importance = model.get_booster().get_score(importance_type="gain")
     feature_indices = [int(key) for key in gain_importance.keys()]
 
-    df = df_features.copy()
-    self.__drop_non_features(df)
+    df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
     top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
-    del df
 
     return pd.DataFrame({'feature': top_feature_cols, 
       'importance': list(gain_importance.values())}, columns = ['feature', 'importance'])
@@ -675,20 +682,6 @@ class XGBoostClassifier():
     logging.debug('{}: columns: {:,}'.format(file, len(columns)))
     return columns
 
-  def __drop_non_features(self, df):
-    if 'index' in df:
-        df.drop('index', axis=1, inplace=True)
-    if 'activity' in df:
-        df.drop('activity', axis=1, inplace=True)
-    if 'cid' in df:
-        df.drop('cid', axis=1, inplace=True)
-    if 'pid' in df:
-        df.drop('pid', axis=1, inplace=True)
-    if 'expanding_mean' in df:
-        df.drop('expanding_mean', axis=1, inplace=True)
-    if 'sample_activity_score' in df:
-        df.drop('sample_activity_score', axis=1, inplace=True)
-
   # load test data and gather metrics
   def __gather_metrics(self, df_in, model, df_validation):
     # Take only the reduced set of columns.
@@ -700,20 +693,26 @@ class XGBoostClassifier():
     training_features_active = df_in[df_in['activity']==1]
     training_features_inactive = df_in[df_in['activity']==0]
     
-    self.__drop_non_features(training_features_active)
-    self.__drop_non_features(training_features_inactive)
+    training_features_active = \
+      training_features_active.loc[:, ~training_features_active.columns.isin(self.non_feature_columns)]
+    training_features_inactive = \
+      training_features_inactive.loc[:, ~training_features_inactive.columns.isin(self.non_feature_columns)]
 
     validation_features_active = df_validation[df_validation['activity']==1]
     validation_features_inactive = df_validation[df_validation['activity']==0]
 
     # Needed later for reporting
-    df_validation_features = validation_features_active.append(validation_features_inactive).copy()
+    df_validation_features = validation_features_active.append(validation_features_inactive)
 
     y_test = df_validation_features['activity'].values
 
-    self.__drop_non_features(validation_features_active)
-    self.__drop_non_features(validation_features_inactive)
+    # remove the non-feature columns
+    validation_features_active = \
+      validation_features_active.loc[:, ~validation_features_active.columns.isin(self.non_feature_columns)]
 
+    validation_features_inactive = \
+      validation_features_inactive.loc[:, ~validation_features_inactive.columns.isin(self.non_feature_columns)]
+    
     X_test = validation_features_active.append(validation_features_inactive)
 
     # accuracy, precision and recall
@@ -805,9 +804,8 @@ class XGBoostClassifier():
   # Model for combined cid/pid features using activity scores as sample weights.
   def __train_and_eval(self, df_in, df_validation, use_weights=True):
     Y = df_in['activity'].values
-    df = df_in.copy()
-    self.__drop_non_features(df)
-    X = df
+    
+    X = df_in.loc[:, ~df_in.columns.isin(self.non_feature_columns)]
     X.columns = list(range(0, len(X.columns)))
 
     xgb = self.__get_xgb()
@@ -817,7 +815,8 @@ class XGBoostClassifier():
       sample_weight = df_in['sample_activity_score']
 
     model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
-    del df
+    del X
+    del Y
 
     # load test data and gather metrics
     results = self.__gather_metrics(df_in, model, df_validation)
