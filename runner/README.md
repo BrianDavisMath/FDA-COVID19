@@ -28,13 +28,13 @@ The above files are joined together to create the training and validation sets u
 
 * **[-a] max_activity_threshold** - used to sub-sample the training data for the first run
 
-* **[-s] activity_threshold_step** - the amount to reduced the activity threshold on each run before sub-sampling the training data
+* **[-s] activity_threshold_step** - the amount to reduce the activity threshold on each run before sub-sampling the training data
 
 * **[-f] data_folder** - defaults to "/data". Specifies the location of the data from which the features will be selected.
 
-* **[-d] use_dimension_reduction_weights** - [True|False] whether to use sample_activity_score for sample_weight when training XGBoost for feature selection
+* **[-d] use_dimension_reduction_weights** - [True|False] whether to use _sample_activity_score_ for _sample_weight_ when training XGBoost for feature selection
 
-* **[-t] use_training_weights** - [True|False] whether to use sample_activity_score for sample_weight when training XGBoost for activity classification
+* **[-t] use_training_weights** - [True|False] whether to use _sample_activity_score_ for sample_weight when training XGBoost for activity classification
 
 * **[-n] name** - job name used to place results in a directory of that name
 
