@@ -452,7 +452,7 @@ class XGBoostClassifier():
 
     path = 'results'
     try:
-      os.mkdir(path)
+      os.makedirs(path, exist_ok=True)
     except OSError:
       logging.debug ("Creation of the directory %s failed" % path)
     else:
