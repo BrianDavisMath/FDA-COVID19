@@ -30,6 +30,8 @@ Inputs are:
   [-t] use_training_weights - [True|False] whether to use sample_activity_score 
   for sample_weight when training XGBoost for activity classification
 
+  [-n] name - job name used to place results in a directory of that name
+
 
 Outputs:
 
@@ -73,7 +75,7 @@ Data folder:
 
 Example call to run program:
 
-  python job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False
+  python job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False -n 'test_0'
 
   This will run two experiments where the activity threshold, used for sampling
   the training data, are 0.02 and 0.01. The corresponding run_ids will be 0 and 1.
@@ -110,11 +112,13 @@ class XGBoostClassifier():
     activity_threshold_step,
     data_folder,
     use_dimension_reduction_weights,
-    use_training_weights):
+    use_training_weights,
+    job_name):
 
       self.max_activity_threshold = float(max_activity_threshold)
       self.activity_threshold_step = float(activity_threshold_step)
       self.data_loc = data_folder
+      self.job_name = job_name
 
       self.bad_dragon_cols = []
       self.non_feature_columns = ['index', 'activity', 'cid', 'pid', 'expanding_mean', 'sample_activity_score']
@@ -329,7 +333,8 @@ class XGBoostClassifier():
       'protein_classification'
       ])
 
-    df.to_csv('results/feature_importances_{}.csv'.format(run_id), index=False)
+    path = 'results/'+self.job_name+'/feature_importances_{}.csv'.format(run_id)
+    df.to_csv(path, index=False)
     del df
 
 
@@ -389,7 +394,8 @@ class XGBoostClassifier():
       'xgb_colsample_bytree'
       ])
 
-    df.to_csv('results/params_and_metrics.csv', index=False)
+    path = 'results/'+self.job_name+'/params_and_metrics.csv'
+    df.to_csv(path, index=False)
     del df
 
 
@@ -450,7 +456,7 @@ class XGBoostClassifier():
       'combined_predict_proba'
       ])
 
-    path = 'results'
+    path = 'results/'+self.job_name
     try:
       os.makedirs(path, exist_ok=True)
     except OSError:
@@ -458,7 +464,8 @@ class XGBoostClassifier():
     else:
       logging.debug ("Successfully created the directory %s " % path)
 
-    df.to_csv('results/results_{}.csv'.format(run_id), index=False)
+    file_path = 'results/'+self.job_name+'/results_{}_.csv'.format(run_id)
+    df.to_csv(file_path, index=False)
     del df
 
 
@@ -834,25 +841,32 @@ def main(argv):
   data_folder = 'data/'
   use_dimension_reduction_weights = 'True'
   use_training_weights = 'True'
+  job_name = ''
 
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:f:d:t:",["athresh=", "step=", "data=", "dweights=", "tweights="])
+    opts, args = getopt.getopt(argv,"ha:s:f:d:t:n:",["athresh=", "step=", "data=", "dweights=", "tweights=", "name="])
   except getopt.GetoptError:
+    print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+    print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
+    print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+    print('\n\n')
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
+      print('\n\n')
       logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+      print('\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
       max_activity_threshold = arg
@@ -864,11 +878,15 @@ def main(argv):
       use_dimension_reduction_weights = arg
     elif opt in ("-t", "--tweights"):
       use_training_weights = arg
+    elif opt in ("-n", "--name"):
+      job_name = arg
 
 
   if max_activity_threshold is None or activity_threshold_step is None:
+    print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+    print('\n\n')
     sys.exit()
 
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
@@ -881,7 +899,8 @@ def main(argv):
     activity_threshold_step=activity_threshold_step,
     data_folder=data_folder, 
     use_dimension_reduction_weights=use_dimension_reduction_weights=='True',
-    use_training_weights=use_training_weights=='True')
+    use_training_weights=use_training_weights=='True',
+    job_name=job_name)
 
 
 if __name__== "__main__":
