@@ -21,6 +21,9 @@ Inputs are:
   [-s] activity_threshold_step - the amount to reduced the activity threshold
   on each run before sub-sampling the training data
 
+  [-m] activity_threshold_stop - the value (+ activity_threshold_step) upon which the run
+  terminates
+
   [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
@@ -110,6 +113,7 @@ class XGBoostClassifier():
     self, 
     max_activity_threshold, 
     activity_threshold_step,
+    activity_threshold_stop,
     data_folder,
     use_dimension_reduction_weights,
     use_training_weights,
@@ -117,6 +121,7 @@ class XGBoostClassifier():
 
       self.max_activity_threshold = float(max_activity_threshold)
       self.activity_threshold_step = float(activity_threshold_step)
+      self.activity_threshold_stop = float(activity_threshold_stop)
       self.data_loc = data_folder
       self.job_name = job_name
 
@@ -158,7 +163,7 @@ class XGBoostClassifier():
 
       gc.collect()
 
-      while activity_threshold > 0.0:
+      while activity_threshold > self.activity_threshold_stop:
         df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
         logging.debug('sample_activity_score ({}) features shape: {}'
           .format(activity_threshold, df_features.shape))
@@ -838,6 +843,7 @@ def main(argv):
   validation_features = None
   max_activity_threshold = None
   activity_threshold_step = None
+  activity_threshold_stop = 0.0
   data_folder = 'data/'
   use_dimension_reduction_weights = 'True'
   use_training_weights = 'True'
@@ -846,17 +852,17 @@ def main(argv):
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:f:d:t:n:",["athresh=", "step=", "data=", "dweights=", "tweights=", "name="])
+    opts, args = getopt.getopt(argv,"ha:s:m:f:d:t:n:",["athresh=", "step=", "stop=", "data=", "dweights=", "tweights=", "name="])
   except getopt.GetoptError:
     print('\n\n')
-    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
+    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop> \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
     print('\n\n')
-    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
+    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
     print('\n\n')
     sys.exit(2)
@@ -864,7 +870,7 @@ def main(argv):
   for opt, arg in opts:
     if opt == '-h':
       print('\n\n')
-      logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
+      logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
       print('\n\n')
       sys.exit()
@@ -872,6 +878,8 @@ def main(argv):
       max_activity_threshold = arg
     elif opt in ("-s", "--step"):
       activity_threshold_step = arg
+    elif opt in ("-m", "--stop"):
+      activity_threshold_stop = arg
     elif opt in ("-f", "--data"):
       data_folder = arg
     elif opt in ("-d", "--dweights"):
@@ -884,19 +892,21 @@ def main(argv):
 
   if max_activity_threshold is None or activity_threshold_step is None:
     print('\n\n')
-    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> \
+    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
     print('\n\n')
     sys.exit()
 
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
   logging.debug('activity_threshold_step is {}'.format(activity_threshold_step))
+  logging.debug('activity_threshold_stop is {}'.format(activity_threshold_stop))
   logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
   logging.debug('use_training_weights is {}'.format(use_training_weights=='True'))
 
   xgb = XGBoostClassifier(
     max_activity_threshold=max_activity_threshold,
     activity_threshold_step=activity_threshold_step,
+    activity_threshold_stop=activity_threshold_stop,
     data_folder=data_folder, 
     use_dimension_reduction_weights=use_dimension_reduction_weights=='True',
     use_training_weights=use_training_weights=='True',
