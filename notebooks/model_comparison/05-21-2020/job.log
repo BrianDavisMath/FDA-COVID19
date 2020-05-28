@@ -1,0 +1,1868 @@
+DEBUG:root:max_activity_threshold is 0.1
+DEBUG:root:activity_threshold_step is 0.01
+DEBUG:root:activity_threshold_stop is 0.05
+DEBUG:root:use_dimension_reduction_weights is False
+DEBUG:root:use_training_weights is False
+DEBUG:root:===============================================
+DEBUG:root:dragon_features.csv
+DEBUG:root:===============================================
+DEBUG:root:max_activity_threshold is 0.1
+DEBUG:root:activity_threshold_step is 0.01
+DEBUG:root:activity_threshold_stop is 0.05
+DEBUG:root:use_dimension_reduction_weights is True
+DEBUG:root:use_training_weights is False
+DEBUG:root:===============================================
+DEBUG:root:dragon_features.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 88,105
+DEBUG:root:Number of columns: 3,839
+DEBUG:root:0 columns with missing values
+DEBUG:root:              MW                AMW  ... Infective-80 Infective-50
+cid                                  ...                          
+72792562  474.67  6.781000000000001  ...            0            0
+44394609  546.48              8.674  ...            0            0
+
+[2 rows x 3839 columns]
+DEBUG:root:max_activity_threshold is 0.1
+DEBUG:root:activity_threshold_step is 0.01
+DEBUG:root:activity_threshold_stop is 0.05
+DEBUG:root:use_dimension_reduction_weights is False
+DEBUG:root:use_training_weights is True
+DEBUG:root:===============================================
+DEBUG:root:dragon_features.csv
+DEBUG:root:===============================================
+DEBUG:root:number of columns where the frequency of "na" values is <= 2%: 3640.
+DEBUG:root:max_activity_threshold is 0.1
+DEBUG:root:activity_threshold_step is 0.01
+DEBUG:root:activity_threshold_stop is 0.05
+DEBUG:root:use_dimension_reduction_weights is True
+DEBUG:root:use_training_weights is True
+DEBUG:root:===============================================
+DEBUG:root:dragon_features.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 88,105
+DEBUG:root:Number of columns: 3,839
+DEBUG:root:0 columns with missing values
+DEBUG:root:              MW                AMW  ... Infective-80 Infective-50
+cid                                  ...                          
+72792562  474.67  6.781000000000001  ...            0            0
+44394609  546.48              8.674  ...            0            0
+
+[2 rows x 3839 columns]
+DEBUG:root:Number of rows: 88,105
+DEBUG:root:Number of columns: 3,839
+DEBUG:root:number of columns where the frequency of "na" values is <= 2%: 3640.
+DEBUG:root:0 columns with missing values
+DEBUG:root:              MW                AMW  ... Infective-80 Infective-50
+cid                                  ...                          
+72792562  474.67  6.781000000000001  ...            0            0
+44394609  546.48              8.674  ...            0            0
+
+[2 rows x 3839 columns]
+DEBUG:root:3565 columns with missing values.
+DEBUG:root:Number of rows: 88,105
+DEBUG:root:Number of columns: 3,839
+DEBUG:root:number of columns where the frequency of "na" values is <= 2%: 3640.
+DEBUG:root:0 columns with missing values (after imputing): []
+DEBUG:root:===============================================
+DEBUG:root:fingerprints.csv
+DEBUG:root:===============================================
+DEBUG:root:0 columns with missing values
+DEBUG:root:              MW                AMW  ... Infective-80 Infective-50
+cid                                  ...                          
+72792562  474.67  6.781000000000001  ...            0            0
+44394609  546.48              8.674  ...            0            0
+
+[2 rows x 3839 columns]
+DEBUG:root:Number of rows: 91,756
+DEBUG:root:Number of columns: 2,850
+DEBUG:root:number of columns where the frequency of "na" values is <= 2%: 3640.
+DEBUG:root:0 columns with missing values
+DEBUG:root:          1  5  6  7  ...  3574_2159  2896_1320_2357  213_2326  4078_192
+cid                   ...                                               
+38258     0  0  0  0  ...          0               0         0         0
+23644997  0  0  0  1  ...          0               0         0         0
+
+[2 rows x 2850 columns]
+DEBUG:root:===============================================
+DEBUG:root:binding_sites.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,209
+DEBUG:root:Number of columns: 5,258
+DEBUG:root:0 columns with missing values
+DEBUG:root:          TAA    MAA    AAA    SAA  ...  GYY_PYY  TYY_RYY  QYY_WYY    AZZ
+Q9BZP6   True  False  False  False  ...    False    False    False  False
+P43003  False  False  False  False  ...    False    False    False  False
+
+[2 rows x 5258 columns]
+DEBUG:root:===============================================
+DEBUG:root:expasy.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,201
+DEBUG:root:Number of columns: 7
+DEBUG:root:0 columns with missing values
+DEBUG:root:        helical   beta   coil  veryBuried  veryExposed  someBuried  someExposed
+pid                                                                            
+10GS_A    0.536  0.096  0.368       0.292        0.254       0.234        0.220
+1A2C_H    0.089  0.378  0.533       0.313        0.301       0.212        0.174
+DEBUG:root:===============================================
+DEBUG:root:profeat.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,167
+DEBUG:root:Number of columns: 849
+DEBUG:root:80 columns with missing values
+DEBUG:root:        [G1.1.1.1]  [G1.1.1.2]  ...  [G7.1.1.79]  [G7.1.1.80]
+10GS_A    7.177033    1.913876  ...     0.005282     0.004062
+1A2C_H    4.633205    2.702703  ...     0.007673     0.003012
+
+[2 rows x 849 columns]
+DEBUG:root:number of missing values for each column containing them is: 80
+DEBUG:root:number of rows remaining, without NaNs: 4,161
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 168,765
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0             1.0
+1  159478  46938678  O15528         0                    1.0             0.5
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0        1.000000
+1  159478  46938678  O15528         0                    1.0        0.500000
+2  159479  46938678  O15528         1                    1.0        0.666667
+3  150238  13703975  P22459         0                    1.0        0.500000
+4  150239  13088125  P22459         0                    1.0        0.400000
+DEBUG:root:===============================================
+DEBUG:root:Join the data using training_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 167,678 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 167,525 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 164,563 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:3565 columns with missing values.
+DEBUG:root:Joining features on protein df_dragon_features yields 164,194 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 164,194 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 164,194
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 19,650
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:        index       cid  ... sample_activity_score  expanding_mean
+97250   83257  71283192  ...              0.081395        0.264049
+73264  105825   6324668  ...              0.155612        0.307132
+
+[2 rows x 6 columns]
+DEBUG:root:         index       cid  ... sample_activity_score  expanding_mean
+97250    83257  71283192  ...              0.081395        0.264049
+73264   105825   6324668  ...              0.155612        0.307132
+100410   87896  16038120  ...              0.074074        0.257870
+10246     7845      2170  ...              0.527778        0.637065
+28855    60931      3823  ...              0.376694        0.445315
+
+[5 rows x 6 columns]
+DEBUG:root:===============================================
+DEBUG:root:Join the data using validation_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 19,529 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 19,484 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 18,971 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:Joining features on protein df_dragon_features yields 18,945 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 18,945 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 18,945
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root: Validation features:
+DEBUG:root:   index       cid     pid  ...  2896_1320_2357  213_2326  4078_192
+0  83257  71283192  P16234  ...               0         0         0
+1  83256  11723086  P16234  ...               0         0         0
+2  83197  11517980  P16234  ...               0         0         0
+3  83201  54760053  P16234  ...               0         0         0
+4  83254  68783839  P16234  ...               0         0         0
+
+[5 rows x 12610 columns]
+DEBUG:root:df_validation - rows: 18,945, columns: 12,610
+DEBUG:root:0 columns with missing values (after imputing): []
+DEBUG:root:===============================================
+DEBUG:root:fingerprints.csv
+DEBUG:root:===============================================
+DEBUG:root:sample_activity_score (0.1) features shape: (70881, 12610)
+DEBUG:root:Dropped 629 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 70,881, columns: 11,981
+DEBUG:root:X with non-features dropped - rows: 70,881, columns: 11,975
+DEBUG:root:3565 columns with missing values.
+DEBUG:root:Number of rows: 91,756
+DEBUG:root:Number of columns: 2,850
+DEBUG:root:0 columns with missing values
+DEBUG:root:          1  5  6  7  ...  3574_2159  2896_1320_2357  213_2326  4078_192
+cid                   ...                                               
+38258     0  0  0  0  ...          0               0         0         0
+23644997  0  0  0  1  ...          0               0         0         0
+
+[2 rows x 2850 columns]
+DEBUG:root:===============================================
+DEBUG:root:binding_sites.csv
+DEBUG:root:===============================================
+DEBUG:root:0 columns with missing values (after imputing): []
+DEBUG:root:===============================================
+DEBUG:root:fingerprints.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,209
+DEBUG:root:Number of columns: 5,258
+DEBUG:root:0 columns with missing values
+DEBUG:root:          TAA    MAA    AAA    SAA  ...  GYY_PYY  TYY_RYY  QYY_WYY    AZZ
+Q9BZP6   True  False  False  False  ...    False    False    False  False
+P43003  False  False  False  False  ...    False    False    False  False
+
+[2 rows x 5258 columns]
+DEBUG:root:===============================================
+DEBUG:root:expasy.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,201
+DEBUG:root:Number of columns: 7
+DEBUG:root:0 columns with missing values
+DEBUG:root:        helical   beta   coil  veryBuried  veryExposed  someBuried  someExposed
+pid                                                                            
+10GS_A    0.536  0.096  0.368       0.292        0.254       0.234        0.220
+1A2C_H    0.089  0.378  0.533       0.313        0.301       0.212        0.174
+DEBUG:root:===============================================
+DEBUG:root:profeat.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,167
+DEBUG:root:Number of columns: 849
+DEBUG:root:80 columns with missing values
+DEBUG:root:        [G1.1.1.1]  [G1.1.1.2]  ...  [G7.1.1.79]  [G7.1.1.80]
+10GS_A    7.177033    1.913876  ...     0.005282     0.004062
+1A2C_H    4.633205    2.702703  ...     0.007673     0.003012
+
+[2 rows x 849 columns]
+DEBUG:root:number of missing values for each column containing them is: 80
+DEBUG:root:number of rows remaining, without NaNs: 4,161
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 168,765
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0             1.0
+1  159478  46938678  O15528         0                    1.0             0.5
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0        1.000000
+1  159478  46938678  O15528         0                    1.0        0.500000
+2  159479  46938678  O15528         1                    1.0        0.666667
+3  150238  13703975  P22459         0                    1.0        0.500000
+4  150239  13088125  P22459         0                    1.0        0.400000
+DEBUG:root:===============================================
+DEBUG:root:Join the data using training_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 167,678 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 167,525 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 164,563 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:3565 columns with missing values.
+DEBUG:root:Joining features on protein df_dragon_features yields 164,194 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Number of rows: 91,756
+DEBUG:root:Number of columns: 2,850
+DEBUG:root:Joining features on protein df_fingerprints yields 164,194 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 164,194
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 19,650
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:        index       cid  ... sample_activity_score  expanding_mean
+97250   83257  71283192  ...              0.081395        0.264049
+73264  105825   6324668  ...              0.155612        0.307132
+
+[2 rows x 6 columns]
+DEBUG:root:         index       cid  ... sample_activity_score  expanding_mean
+97250    83257  71283192  ...              0.081395        0.264049
+73264   105825   6324668  ...              0.155612        0.307132
+100410   87896  16038120  ...              0.074074        0.257870
+10246     7845      2170  ...              0.527778        0.637065
+28855    60931      3823  ...              0.376694        0.445315
+
+[5 rows x 6 columns]
+DEBUG:root:===============================================
+DEBUG:root:Join the data using validation_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 19,529 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 19,484 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 18,971 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:Joining features on protein df_dragon_features yields 18,945 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 18,945 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 18,945
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root: Validation features:
+DEBUG:root:   index       cid     pid  ...  2896_1320_2357  213_2326  4078_192
+0  83257  71283192  P16234  ...               0         0         0
+1  83256  11723086  P16234  ...               0         0         0
+2  83197  11517980  P16234  ...               0         0         0
+3  83201  54760053  P16234  ...               0         0         0
+4  83254  68783839  P16234  ...               0         0         0
+
+[5 rows x 12610 columns]
+DEBUG:root:df_validation - rows: 18,945, columns: 12,610
+DEBUG:root:sample_activity_score (0.1) features shape: (70881, 12610)
+DEBUG:root:0 columns with missing values
+DEBUG:root:          1  5  6  7  ...  3574_2159  2896_1320_2357  213_2326  4078_192
+cid                   ...                                               
+38258     0  0  0  0  ...          0               0         0         0
+23644997  0  0  0  1  ...          0               0         0         0
+
+[2 rows x 2850 columns]
+DEBUG:root:===============================================
+DEBUG:root:binding_sites.csv
+DEBUG:root:===============================================
+DEBUG:root:0 columns with missing values (after imputing): []
+DEBUG:root:===============================================
+DEBUG:root:fingerprints.csv
+DEBUG:root:===============================================
+DEBUG:root:Dropped 629 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 70,881, columns: 11,981
+DEBUG:root:X with non-features dropped - rows: 70,881, columns: 11,975
+DEBUG:root:Number of rows: 4,209
+DEBUG:root:Number of columns: 5,258
+DEBUG:root:0 columns with missing values
+DEBUG:root:          TAA    MAA    AAA    SAA  ...  GYY_PYY  TYY_RYY  QYY_WYY    AZZ
+Q9BZP6   True  False  False  False  ...    False    False    False  False
+P43003  False  False  False  False  ...    False    False    False  False
+
+[2 rows x 5258 columns]
+DEBUG:root:===============================================
+DEBUG:root:expasy.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,201
+DEBUG:root:Number of columns: 7
+DEBUG:root:0 columns with missing values
+DEBUG:root:        helical   beta   coil  veryBuried  veryExposed  someBuried  someExposed
+pid                                                                            
+10GS_A    0.536  0.096  0.368       0.292        0.254       0.234        0.220
+1A2C_H    0.089  0.378  0.533       0.313        0.301       0.212        0.174
+DEBUG:root:===============================================
+DEBUG:root:profeat.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,167
+DEBUG:root:Number of columns: 849
+DEBUG:root:80 columns with missing values
+DEBUG:root:        [G1.1.1.1]  [G1.1.1.2]  ...  [G7.1.1.79]  [G7.1.1.80]
+10GS_A    7.177033    1.913876  ...     0.005282     0.004062
+1A2C_H    4.633205    2.702703  ...     0.007673     0.003012
+
+[2 rows x 849 columns]
+DEBUG:root:number of missing values for each column containing them is: 80
+DEBUG:root:number of rows remaining, without NaNs: 4,161
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 168,765
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0             1.0
+1  159478  46938678  O15528         0                    1.0             0.5
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0        1.000000
+1  159478  46938678  O15528         0                    1.0        0.500000
+2  159479  46938678  O15528         1                    1.0        0.666667
+3  150238  13703975  P22459         0                    1.0        0.500000
+4  150239  13088125  P22459         0                    1.0        0.400000
+DEBUG:root:===============================================
+DEBUG:root:Join the data using training_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 167,678 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 167,525 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 164,563 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:Number of rows: 91,756
+DEBUG:root:Number of columns: 2,850
+DEBUG:root:Joining features on protein df_dragon_features yields 164,194 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 164,194 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 164,194
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 19,650
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:        index       cid  ... sample_activity_score  expanding_mean
+97250   83257  71283192  ...              0.081395        0.264049
+73264  105825   6324668  ...              0.155612        0.307132
+
+[2 rows x 6 columns]
+DEBUG:root:         index       cid  ... sample_activity_score  expanding_mean
+97250    83257  71283192  ...              0.081395        0.264049
+73264   105825   6324668  ...              0.155612        0.307132
+100410   87896  16038120  ...              0.074074        0.257870
+10246     7845      2170  ...              0.527778        0.637065
+28855    60931      3823  ...              0.376694        0.445315
+
+[5 rows x 6 columns]
+DEBUG:root:===============================================
+DEBUG:root:Join the data using validation_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 19,529 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 19,484 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 18,971 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:Joining features on protein df_dragon_features yields 18,945 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 18,945 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 18,945
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root: Validation features:
+DEBUG:root:   index       cid     pid  ...  2896_1320_2357  213_2326  4078_192
+0  83257  71283192  P16234  ...               0         0         0
+1  83256  11723086  P16234  ...               0         0         0
+2  83197  11517980  P16234  ...               0         0         0
+3  83201  54760053  P16234  ...               0         0         0
+4  83254  68783839  P16234  ...               0         0         0
+
+[5 rows x 12610 columns]
+DEBUG:root:df_validation - rows: 18,945, columns: 12,610
+DEBUG:root:0 columns with missing values
+DEBUG:root:          1  5  6  7  ...  3574_2159  2896_1320_2357  213_2326  4078_192
+cid                   ...                                               
+38258     0  0  0  0  ...          0               0         0         0
+23644997  0  0  0  1  ...          0               0         0         0
+
+[2 rows x 2850 columns]
+DEBUG:root:===============================================
+DEBUG:root:binding_sites.csv
+DEBUG:root:===============================================
+DEBUG:root:sample_activity_score (0.1) features shape: (70881, 12610)
+DEBUG:root:Number of rows: 4,209
+DEBUG:root:Number of columns: 5,258
+DEBUG:root:0 columns with missing values
+DEBUG:root:          TAA    MAA    AAA    SAA  ...  GYY_PYY  TYY_RYY  QYY_WYY    AZZ
+Q9BZP6   True  False  False  False  ...    False    False    False  False
+P43003  False  False  False  False  ...    False    False    False  False
+
+[2 rows x 5258 columns]
+DEBUG:root:===============================================
+DEBUG:root:expasy.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,201
+DEBUG:root:Number of columns: 7
+DEBUG:root:0 columns with missing values
+DEBUG:root:        helical   beta   coil  veryBuried  veryExposed  someBuried  someExposed
+pid                                                                            
+10GS_A    0.536  0.096  0.368       0.292        0.254       0.234        0.220
+1A2C_H    0.089  0.378  0.533       0.313        0.301       0.212        0.174
+DEBUG:root:===============================================
+DEBUG:root:profeat.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 4,167
+DEBUG:root:Number of columns: 849
+DEBUG:root:80 columns with missing values
+DEBUG:root:        [G1.1.1.1]  [G1.1.1.2]  ...  [G7.1.1.79]  [G7.1.1.80]
+10GS_A    7.177033    1.913876  ...     0.005282     0.004062
+1A2C_H    4.633205    2.702703  ...     0.007673     0.003012
+
+[2 rows x 849 columns]
+DEBUG:root:number of missing values for each column containing them is: 80
+DEBUG:root:number of rows remaining, without NaNs: 4,161
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 168,765
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0             1.0
+1  159478  46938678  O15528         0                    1.0             0.5
+DEBUG:root:    index       cid     pid  activity  sample_activity_score  expanding_mean
+0  185362    204106  Q9UP65         1                    1.0        1.000000
+1  159478  46938678  O15528         0                    1.0        0.500000
+2  159479  46938678  O15528         1                    1.0        0.666667
+3  150238  13703975  P22459         0                    1.0        0.500000
+4  150239  13088125  P22459         0                    1.0        0.400000
+DEBUG:root:===============================================
+DEBUG:root:Join the data using training_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 167,678 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 167,525 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 164,563 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:Dropped 629 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 70,881, columns: 11,981
+DEBUG:root:X with non-features dropped - rows: 70,881, columns: 11,975
+DEBUG:root:Joining features on protein df_dragon_features yields 164,194 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 164,194 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 164,194
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root:===============================================
+DEBUG:root:interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:Number of rows: 19,650
+DEBUG:root:Number of columns: 6
+DEBUG:root:0 columns with missing values
+DEBUG:root:        index       cid  ... sample_activity_score  expanding_mean
+97250   83257  71283192  ...              0.081395        0.264049
+73264  105825   6324668  ...              0.155612        0.307132
+
+[2 rows x 6 columns]
+DEBUG:root:         index       cid  ... sample_activity_score  expanding_mean
+97250    83257  71283192  ...              0.081395        0.264049
+73264   105825   6324668  ...              0.155612        0.307132
+100410   87896  16038120  ...              0.074074        0.257870
+10246     7845      2170  ...              0.527778        0.637065
+28855    60931      3823  ...              0.376694        0.445315
+
+[5 rows x 6 columns]
+DEBUG:root:===============================================
+DEBUG:root:Join the data using validation_interactions.csv
+DEBUG:root:===============================================
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_interactions + df_binding_sites = df_features 
+DEBUG:root:Joining interactions on protein binding_sites yields 19,529 rows and 5,264 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_expasy 
+DEBUG:root:Joining features on protein expasy yields 19,484 rows and 5,271 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_profeat 
+DEBUG:root:Joining features on protein df_profeat yields 18,971 rows and 6,120 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_dragon_features 
+DEBUG:root:Joining features on protein df_dragon_features yields 18,945 rows and 9,760 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:df_features + df_fingerprints 
+DEBUG:root:Joining features on protein df_fingerprints yields 18,945 rows and 12,610 columns
+DEBUG:root:-----------------------------------------------
+DEBUG:root:Number of rows in joined feature set: 18,945
+DEBUG:root:Number of columns in joined feature set: 12,610
+DEBUG:root: Validation features:
+DEBUG:root:   index       cid     pid  ...  2896_1320_2357  213_2326  4078_192
+0  83257  71283192  P16234  ...               0         0         0
+1  83256  11723086  P16234  ...               0         0         0
+2  83197  11517980  P16234  ...               0         0         0
+3  83201  54760053  P16234  ...               0         0         0
+4  83254  68783839  P16234  ...               0         0         0
+
+[5 rows x 12610 columns]
+DEBUG:root:df_validation - rows: 18,945, columns: 12,610
+DEBUG:root:sample_activity_score (0.1) features shape: (70881, 12610)
+DEBUG:root:Dropped 629 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 70,881, columns: 11,981
+DEBUG:root:X with non-features dropped - rows: 70,881, columns: 11,975
+DEBUG:root:number of most important features: 3,507
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 70,881, columns: 2,246
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  2835_124  2188  3054
+0    204106  Q9UP65         1  ...         0     0     0
+1    204106  P47712         0  ...         0     0     0
+2  10290302  Q9UP65         1  ...         0     0     0
+3  10290302  P00403         1  ...         0     0     0
+4  10290302  P00395         1  ...         0     0     0
+
+[5 rows x 2246 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 70,881, columns: 1,269
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    EKI    PAP  FRA_CRA
+0    204106  Q9UP65         1  ...  False  False    False
+1    204106  P47712         0  ...  False  False    False
+2  10290302  Q9UP65         1  ...  False  False    False
+3  10290302  P00403         1  ...  False  False    False
+4  10290302  P00395         1  ...  False  False    False
+
+[5 rows x 1269 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 2,688
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 70,881, columns: 1,662
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_SM11_AEA(ed)  cid_SM03_AEA(ri)  3743
+0    204106  Q9UP65         1  ...            22.592             6.774     0
+1    204106  P47712         0  ...            22.592             6.774     0
+2  10290302  Q9UP65         1  ...            22.647             6.774     0
+3  10290302  P00403         1  ...            22.647             6.774     0
+4  10290302  P00395         1  ...            22.647             6.774     0
+
+[5 rows x 1662 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 70,881, columns: 1,034
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  YQT_WQT    YSS  FKY_QKY
+0    204106  Q9UP65         1  ...    False  False    False
+1    204106  P47712         0  ...    False  False    False
+2  10290302  Q9UP65         1  ...    False  False    False
+3  10290302  P00403         1  ...    False  False    False
+4  10290302  P00395         1  ...     True  False    False
+
+[5 rows x 1034 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 3,507
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 70,881, columns: 2,246
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  2835_124  2188  3054
+0    204106  Q9UP65         1  ...         0     0     0
+1    204106  P47712         0  ...         0     0     0
+2  10290302  Q9UP65         1  ...         0     0     0
+3  10290302  P00403         1  ...         0     0     0
+4  10290302  P00395         1  ...         0     0     0
+
+[5 rows x 2246 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 70,881, columns: 1,269
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    EKI    PAP  FRA_CRA
+0    204106  Q9UP65         1  ...  False  False    False
+1    204106  P47712         0  ...  False  False    False
+2  10290302  Q9UP65         1  ...  False  False    False
+3  10290302  P00403         1  ...  False  False    False
+4  10290302  P00395         1  ...  False  False    False
+
+[5 rows x 1269 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 2,688
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 70,881, columns: 1,662
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_SM11_AEA(ed)  cid_SM03_AEA(ri)  3743
+0    204106  Q9UP65         1  ...            22.592             6.774     0
+1    204106  P47712         0  ...            22.592             6.774     0
+2  10290302  Q9UP65         1  ...            22.647             6.774     0
+3  10290302  P00403         1  ...            22.647             6.774     0
+4  10290302  P00395         1  ...            22.647             6.774     0
+
+[5 rows x 1662 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 70,881, columns: 1,034
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  YQT_WQT    YSS  FKY_QKY
+0    204106  Q9UP65         1  ...    False  False    False
+1    204106  P47712         0  ...    False  False    False
+2  10290302  Q9UP65         1  ...    False  False    False
+3  10290302  P00403         1  ...    False  False    False
+4  10290302  P00395         1  ...     True  False    False
+
+[5 rows x 1034 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 3,511
+DEBUG:root:Accuracy = 87.25%
+DEBUG:root:Precision = 78.79%
+DEBUG:root:Recall = 63.84%
+DEBUG:root:rows: 18,945, columns: 2,692
+DEBUG:root:Accuracy = 87.33%
+DEBUG:root:Precision = 79.03%
+DEBUG:root:Recall = 63.95%
+DEBUG:root:rows: 18,945, columns: 2,692
+DEBUG:root:F1 Score (weighted): 62.47%
+DEBUG:root:F1 Score (unweighted): 70.53%
+DEBUG:root:Accuracy = 86.37%
+DEBUG:root:Precision = 74.14%
+DEBUG:root:Recall = 65.98%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 3,511
+DEBUG:root:Accuracy = 86.36%
+DEBUG:root:Precision = 74.29%
+DEBUG:root:Recall = 65.61%
+DEBUG:root:F1 Score (weighted): 62.31%
+DEBUG:root:F1 Score (unweighted): 70.70%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 62.15%
+DEBUG:root:F1 Score (unweighted): 69.82%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 62.38%
+DEBUG:root:F1 Score (unweighted): 69.68%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,246
+DEBUG:root:Accuracy = 81.17%
+DEBUG:root:Precision = 76.80%
+DEBUG:root:Recall = 30.35%
+DEBUG:root:rows: 18,945, columns: 1,662
+DEBUG:root:Accuracy = 80.98%
+DEBUG:root:Precision = 75.75%
+DEBUG:root:Recall = 30.02%
+DEBUG:root:rows: 18,945, columns: 1,662
+DEBUG:root:Accuracy = 79.63%
+DEBUG:root:Precision = 67.40%
+DEBUG:root:Recall = 28.58%
+DEBUG:root:F1 Score (weighted): 35.64%
+DEBUG:root:F1 Score (unweighted): 43.51%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 35.52%
+DEBUG:root:F1 Score (unweighted): 43.00%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 36.80%
+DEBUG:root:F1 Score (unweighted): 40.14%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,246
+DEBUG:root:Accuracy = 79.68%
+DEBUG:root:Precision = 67.40%
+DEBUG:root:Recall = 28.96%
+DEBUG:root:rows: 18,945, columns: 1,269
+DEBUG:root:Accuracy = 74.49%
+DEBUG:root:Precision = 46.78%
+DEBUG:root:Recall = 48.86%
+DEBUG:root:rows: 18,945, columns: 1,034
+DEBUG:root:Accuracy = 74.42%
+DEBUG:root:Precision = 46.62%
+DEBUG:root:Recall = 48.62%
+DEBUG:root:rows: 18,945, columns: 1,034
+DEBUG:root:Accuracy = 75.50%
+DEBUG:root:Precision = 48.81%
+DEBUG:root:Recall = 51.45%
+DEBUG:root:F1 Score (weighted): 36.98%
+DEBUG:root:F1 Score (unweighted): 40.51%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 51.37%
+DEBUG:root:F1 Score (unweighted): 47.80%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  2188  3054  FRA_CRA
+0  644241  P08183         1  ...     0     0    False
+1  644241  P08684         1  ...     0     0    False
+2  644241  Q9Y6L6         1  ...     0     0    False
+3  644241  P00519         1  ...     0     0    False
+4    5279  Q9NRP7         1  ...     0     0    False
+
+[5 rows x 3511 columns]
+DEBUG:root:F1 Score (weighted): 51.41%
+DEBUG:root:F1 Score (unweighted): 47.60%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_SM11_AEA(ed)  cid_SM03_AEA(ri)  3743
+0  644241  P08183         1  ...            22.234             5.878     0
+1  644241  P08684         1  ...            22.234             5.878     0
+2  644241  Q9Y6L6         1  ...            22.234             5.878     0
+3  644241  P00519         1  ...            22.234             5.878     0
+4    5279  Q9NRP7         1  ...            23.573             7.069     0
+
+[5 rows x 2692 columns]
+DEBUG:root:Successfully created the directory results/no_weights 
+DEBUG:root:F1 Score (weighted): 55.00%
+DEBUG:root:F1 Score (unweighted): 50.09%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_SM11_AEA(ed)  cid_SM03_AEA(ri)  3743
+0  644241  P08183         1  ...            22.234             5.878     0
+1  644241  P08684         1  ...            22.234             5.878     0
+2  644241  Q9Y6L6         1  ...            22.234             5.878     0
+3  644241  P00519         1  ...            22.234             5.878     0
+4    5279  Q9NRP7         1  ...            23.573             7.069     0
+
+[5 rows x 2692 columns]
+DEBUG:root:Successfully created the directory results/dim_red_weights 
+DEBUG:root:sample_activity_score (0.09) features shape: (73821, 12610)
+DEBUG:root:sample_activity_score (0.09) features shape: (73821, 12610)
+DEBUG:root:Successfully created the directory results/all_weights 
+DEBUG:root:Dropped 596 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 73,821, columns: 12,014
+DEBUG:root:X with non-features dropped - rows: 73,821, columns: 12,008
+DEBUG:root:sample_activity_score (0.09) features shape: (73821, 12610)
+DEBUG:root:Dropped 596 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 73,821, columns: 12,014
+DEBUG:root:X with non-features dropped - rows: 73,821, columns: 12,008
+DEBUG:root:Dropped 596 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 73,821, columns: 12,014
+DEBUG:root:X with non-features dropped - rows: 73,821, columns: 12,008
+DEBUG:root:rows: 18,945, columns: 1,269
+DEBUG:root:Accuracy = 75.44%
+DEBUG:root:Precision = 48.69%
+DEBUG:root:Recall = 51.65%
+DEBUG:root:F1 Score (weighted): 54.92%
+DEBUG:root:F1 Score (unweighted): 50.12%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  2188  3054  FRA_CRA
+0  644241  P08183         1  ...     0     0    False
+1  644241  P08684         1  ...     0     0    False
+2  644241  Q9Y6L6         1  ...     0     0    False
+3  644241  P00519         1  ...     0     0    False
+4    5279  Q9NRP7         1  ...     0     0    False
+
+[5 rows x 3511 columns]
+DEBUG:root:Successfully created the directory results/training_weights 
+DEBUG:root:sample_activity_score (0.09) features shape: (73821, 12610)
+DEBUG:root:Dropped 596 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 73,821, columns: 12,014
+DEBUG:root:X with non-features dropped - rows: 73,821, columns: 12,008
+DEBUG:root:number of most important features: 2,688
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 73,821, columns: 1,658
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  2923_756  cid_SpMax_D/Dt  3923_815
+0    204106  Q9UP65         1  ...         0          29.090         0
+1    204106  P47712         0  ...         0          29.090         0
+2  10290302  Q9UP65         1  ...         0          28.566         0
+3  10290302  P00403         1  ...         0          28.566         0
+4  10290302  P00395         1  ...         0          28.566         0
+
+[5 rows x 1658 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 73,821, columns: 1,038
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    LKK  MMQ_DMQ  FFG_RFG
+0    204106  Q9UP65         1  ...   True    False    False
+1    204106  P47712         0  ...  False    False    False
+2  10290302  Q9UP65         1  ...   True    False    False
+3  10290302  P00403         1  ...  False    False    False
+4  10290302  P00395         1  ...  False    False    False
+
+[5 rows x 1038 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 3,587
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 73,821, columns: 2,297
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  329  cid_F08[C-F]  2793
+0    204106  Q9UP65         1  ...    0           0.0     0
+1    204106  P47712         0  ...    0           0.0     0
+2  10290302  Q9UP65         1  ...    0           0.0     0
+3  10290302  P00403         1  ...    0           0.0     0
+4  10290302  P00395         1  ...    0           0.0     0
+
+[5 rows x 2297 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 73,821, columns: 1,298
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    TNR    AEA  ADC_VDC
+0    204106  Q9UP65         1  ...  False  False    False
+1    204106  P47712         0  ...  False  False    False
+2  10290302  Q9UP65         1  ...  False  False    False
+3  10290302  P00403         1  ...  False  False    False
+4  10290302  P00395         1  ...  False  False    False
+
+[5 rows x 1298 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 2,688
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 73,821, columns: 1,658
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  2923_756  cid_SpMax_D/Dt  3923_815
+0    204106  Q9UP65         1  ...         0          29.090         0
+1    204106  P47712         0  ...         0          29.090         0
+2  10290302  Q9UP65         1  ...         0          28.566         0
+3  10290302  P00403         1  ...         0          28.566         0
+4  10290302  P00395         1  ...         0          28.566         0
+
+[5 rows x 1658 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 73,821, columns: 1,038
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    LKK  MMQ_DMQ  FFG_RFG
+0    204106  Q9UP65         1  ...   True    False    False
+1    204106  P47712         0  ...  False    False    False
+2  10290302  Q9UP65         1  ...   True    False    False
+3  10290302  P00403         1  ...  False    False    False
+4  10290302  P00395         1  ...  False    False    False
+
+[5 rows x 1038 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 3,587
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 73,821, columns: 2,297
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  329  cid_F08[C-F]  2793
+0    204106  Q9UP65         1  ...    0           0.0     0
+1    204106  P47712         0  ...    0           0.0     0
+2  10290302  Q9UP65         1  ...    0           0.0     0
+3  10290302  P00403         1  ...    0           0.0     0
+4  10290302  P00395         1  ...    0           0.0     0
+
+[5 rows x 2297 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 73,821, columns: 1,298
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    TNR    AEA  ADC_VDC
+0    204106  Q9UP65         1  ...  False  False    False
+1    204106  P47712         0  ...  False  False    False
+2  10290302  Q9UP65         1  ...  False  False    False
+3  10290302  P00403         1  ...  False  False    False
+4  10290302  P00395         1  ...  False  False    False
+
+[5 rows x 1298 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,692
+DEBUG:root:Accuracy = 86.84%
+DEBUG:root:Precision = 76.33%
+DEBUG:root:Recall = 65.10%
+DEBUG:root:rows: 18,945, columns: 2,692
+DEBUG:root:Accuracy = 87.53%
+DEBUG:root:Precision = 81.12%
+DEBUG:root:Recall = 62.34%
+DEBUG:root:rows: 18,945, columns: 3,591
+DEBUG:root:F1 Score (weighted): 62.58%
+DEBUG:root:F1 Score (unweighted): 70.27%
+DEBUG:root:Accuracy = 87.64%
+DEBUG:root:Precision = 81.48%
+DEBUG:root:Recall = 62.47%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 61.74%
+DEBUG:root:F1 Score (unweighted): 70.50%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 62.19%
+DEBUG:root:F1 Score (unweighted): 70.72%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,658
+DEBUG:root:Accuracy = 79.64%
+DEBUG:root:Precision = 67.09%
+DEBUG:root:Recall = 29.05%
+DEBUG:root:rows: 18,945, columns: 3,591
+DEBUG:root:Accuracy = 86.98%
+DEBUG:root:Precision = 76.57%
+DEBUG:root:Recall = 65.61%
+DEBUG:root:F1 Score (weighted): 37.13%
+DEBUG:root:F1 Score (unweighted): 40.54%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,658
+DEBUG:root:Accuracy = 81.02%
+DEBUG:root:Precision = 76.62%
+DEBUG:root:Recall = 29.60%
+DEBUG:root:F1 Score (weighted): 35.39%
+DEBUG:root:F1 Score (unweighted): 42.70%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 62.99%
+DEBUG:root:F1 Score (unweighted): 70.66%
+DEBUG:root:rows: 18,945, columns: 1,038
+DEBUG:root:Accuracy = 77.52%
+DEBUG:root:Precision = 53.16%
+DEBUG:root:Recall = 49.92%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,297
+DEBUG:root:Accuracy = 80.99%
+DEBUG:root:Precision = 76.55%
+DEBUG:root:Recall = 29.49%
+DEBUG:root:F1 Score (weighted): 55.79%
+DEBUG:root:F1 Score (unweighted): 51.49%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_SpMax_D/Dt  3923_815  FFG_RFG
+0  644241  P08183         1  ...          24.041         0    False
+1  644241  P08684         1  ...          24.041         0    False
+2  644241  Q9Y6L6         1  ...          24.041         0    False
+3  644241  P00519         1  ...          24.041         0    False
+4    5279  Q9NRP7         1  ...           6.823         0    False
+
+[5 rows x 2692 columns]
+DEBUG:root:Successfully created the directory results/all_weights 
+DEBUG:root:sample_activity_score (0.08) features shape: (77329, 12610)
+DEBUG:root:Dropped 586 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 77,329, columns: 12,024
+DEBUG:root:X with non-features dropped - rows: 77,329, columns: 12,018
+DEBUG:root:rows: 18,945, columns: 1,038
+DEBUG:root:Accuracy = 76.67%
+DEBUG:root:Precision = 51.29%
+DEBUG:root:Recall = 47.38%
+DEBUG:root:F1 Score (weighted): 35.17%
+DEBUG:root:F1 Score (unweighted): 42.58%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 52.13%
+DEBUG:root:F1 Score (unweighted): 49.26%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_SpMax_D/Dt  3923_815  FFG_RFG
+0  644241  P08183         1  ...          24.041         0    False
+1  644241  P08684         1  ...          24.041         0    False
+2  644241  Q9Y6L6         1  ...          24.041         0    False
+3  644241  P00519         1  ...          24.041         0    False
+4    5279  Q9NRP7         1  ...           6.823         0    False
+
+[5 rows x 2692 columns]
+DEBUG:root:Successfully created the directory results/dim_red_weights 
+DEBUG:root:sample_activity_score (0.08) features shape: (77329, 12610)
+DEBUG:root:Dropped 586 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 77,329, columns: 12,024
+DEBUG:root:X with non-features dropped - rows: 77,329, columns: 12,018
+DEBUG:root:rows: 18,945, columns: 2,297
+DEBUG:root:Accuracy = 79.89%
+DEBUG:root:Precision = 68.58%
+DEBUG:root:Recall = 29.27%
+DEBUG:root:rows: 18,945, columns: 1,298
+DEBUG:root:Accuracy = 76.70%
+DEBUG:root:Precision = 51.37%
+DEBUG:root:Recall = 46.65%
+DEBUG:root:F1 Score (weighted): 37.36%
+DEBUG:root:F1 Score (unweighted): 41.03%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 51.55%
+DEBUG:root:F1 Score (unweighted): 48.90%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  2793    AEA  ADC_VDC
+0  644241  P08183         1  ...     0  False    False
+1  644241  P08684         1  ...     0  False    False
+2  644241  Q9Y6L6         1  ...     0   True    False
+3  644241  P00519         1  ...     0  False    False
+4    5279  Q9NRP7         1  ...     0  False    False
+
+[5 rows x 3591 columns]
+DEBUG:root:Successfully created the directory results/no_weights 
+DEBUG:root:sample_activity_score (0.08) features shape: (77329, 12610)
+DEBUG:root:Dropped 586 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 77,329, columns: 12,024
+DEBUG:root:X with non-features dropped - rows: 77,329, columns: 12,018
+DEBUG:root:rows: 18,945, columns: 1,298
+DEBUG:root:Accuracy = 77.75%
+DEBUG:root:Precision = 53.72%
+DEBUG:root:Recall = 49.75%
+DEBUG:root:F1 Score (weighted): 55.91%
+DEBUG:root:F1 Score (unweighted): 51.66%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  2793    AEA  ADC_VDC
+0  644241  P08183         1  ...     0  False    False
+1  644241  P08684         1  ...     0  False    False
+2  644241  Q9Y6L6         1  ...     0   True    False
+3  644241  P00519         1  ...     0  False    False
+4    5279  Q9NRP7         1  ...     0  False    False
+
+[5 rows x 3591 columns]
+DEBUG:root:Successfully created the directory results/training_weights 
+DEBUG:root:sample_activity_score (0.08) features shape: (77329, 12610)
+DEBUG:root:Dropped 586 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 77,329, columns: 12,024
+DEBUG:root:X with non-features dropped - rows: 77,329, columns: 12,018
+DEBUG:root:number of most important features: 2,765
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 77,329, columns: 1,724
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_ATSC1v  cid_nR#C-  409
+0    204106  Q9UP65         1  ...       8.696        0.0    0
+1    204106  P47712         0  ...       8.696        0.0    0
+2  10290302  Q9UP65         1  ...      11.271        0.0    0
+3  10290302  P00403         1  ...      11.271        0.0    0
+4  10290302  P00395         1  ...      11.271        0.0    0
+
+[5 rows x 1724 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 77,329, columns: 1,049
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    SKA  [G5.1.1.13]    EDF
+0    204106  Q9UP65         1  ...   True   212.249943  False
+1    204106  P47712         0  ...  False   274.081213  False
+2  10290302  Q9UP65         1  ...   True   212.249943  False
+3  10290302  P00403         1  ...  False    66.442571  False
+4  10290302  P00395         1  ...  False   130.714322  False
+
+[5 rows x 1049 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 2,765
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 77,329, columns: 1,724
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_ATSC1v  cid_nR#C-  409
+0    204106  Q9UP65         1  ...       8.696        0.0    0
+1    204106  P47712         0  ...       8.696        0.0    0
+2  10290302  Q9UP65         1  ...      11.271        0.0    0
+3  10290302  P00403         1  ...      11.271        0.0    0
+4  10290302  P00395         1  ...      11.271        0.0    0
+
+[5 rows x 1724 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 77,329, columns: 1,049
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    SKA  [G5.1.1.13]    EDF
+0    204106  Q9UP65         1  ...   True   212.249943  False
+1    204106  P47712         0  ...  False   274.081213  False
+2  10290302  Q9UP65         1  ...   True   212.249943  False
+3  10290302  P00403         1  ...  False    66.442571  False
+4  10290302  P00395         1  ...  False   130.714322  False
+
+[5 rows x 1049 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 3,652
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 77,329, columns: 2,344
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  1674_3242  3134  674_3095
+0    204106  Q9UP65         1  ...          0     0         0
+1    204106  P47712         0  ...          0     0         0
+2  10290302  Q9UP65         1  ...          0     0         0
+3  10290302  P00403         1  ...          0     0         0
+4  10290302  P00395         1  ...          0     0         0
+
+[5 rows x 2344 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 77,329, columns: 1,316
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  MTL_CTL    LES    ITV
+0    204106  Q9UP65         1  ...    False  False  False
+1    204106  P47712         0  ...    False  False  False
+2  10290302  Q9UP65         1  ...    False  False  False
+3  10290302  P00403         1  ...    False  False  False
+4  10290302  P00395         1  ...    False  False  False
+
+[5 rows x 1316 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,769
+DEBUG:root:Accuracy = 87.31%
+DEBUG:root:Precision = 78.25%
+DEBUG:root:Recall = 64.92%
+DEBUG:root:F1 Score (weighted): 63.01%
+DEBUG:root:F1 Score (unweighted): 70.96%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:number of most important features: 3,652
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 77,329, columns: 2,344
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  1674_3242  3134  674_3095
+0    204106  Q9UP65         1  ...          0     0         0
+1    204106  P47712         0  ...          0     0         0
+2  10290302  Q9UP65         1  ...          0     0         0
+3  10290302  P00403         1  ...          0     0         0
+4  10290302  P00395         1  ...          0     0         0
+
+[5 rows x 2344 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 77,329, columns: 1,316
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  MTL_CTL    LES    ITV
+0    204106  Q9UP65         1  ...    False  False  False
+1    204106  P47712         0  ...    False  False  False
+2  10290302  Q9UP65         1  ...    False  False  False
+3  10290302  P00403         1  ...    False  False  False
+4  10290302  P00395         1  ...    False  False  False
+
+[5 rows x 1316 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,769
+DEBUG:root:Accuracy = 88.08%
+DEBUG:root:Precision = 83.77%
+DEBUG:root:Recall = 62.16%
+DEBUG:root:rows: 18,945, columns: 1,724
+DEBUG:root:Accuracy = 79.78%
+DEBUG:root:Precision = 68.83%
+DEBUG:root:Recall = 28.10%
+DEBUG:root:F1 Score (weighted): 62.69%
+DEBUG:root:F1 Score (unweighted): 71.37%
+DEBUG:root:F1 Score (weighted): 37.21%
+DEBUG:root:F1 Score (unweighted): 39.91%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 3,656
+DEBUG:root:Accuracy = 88.13%
+DEBUG:root:Precision = 84.00%
+DEBUG:root:Recall = 62.16%
+DEBUG:root:rows: 18,945, columns: 1,049
+DEBUG:root:Accuracy = 78.91%
+DEBUG:root:Precision = 56.84%
+DEBUG:root:Recall = 48.82%
+DEBUG:root:F1 Score (weighted): 56.44%
+DEBUG:root:F1 Score (unweighted): 52.53%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_ATSC1v  cid_nR#C-  409
+0  644241  P08183         1  ...       5.501        0.0    0
+1  644241  P08684         1  ...       5.501        0.0    0
+2  644241  Q9Y6L6         1  ...       5.501        0.0    0
+3  644241  P00519         1  ...       5.501        0.0    0
+4    5279  Q9NRP7         1  ...       6.965        0.0    0
+
+[5 rows x 2769 columns]
+DEBUG:root:rows: 18,945, columns: 1,724
+DEBUG:root:Accuracy = 81.10%
+DEBUG:root:Precision = 78.09%
+DEBUG:root:Recall = 29.05%
+DEBUG:root:Successfully created the directory results/all_weights 
+DEBUG:root:F1 Score (weighted): 63.01%
+DEBUG:root:F1 Score (unweighted): 71.45%
+DEBUG:root:sample_activity_score (0.07) features shape: (80353, 12610)
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:Dropped 572 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 80,353, columns: 12,038
+DEBUG:root:X with non-features dropped - rows: 80,353, columns: 12,032
+DEBUG:root:rows: 18,945, columns: 3,656
+DEBUG:root:Accuracy = 87.13%
+DEBUG:root:Precision = 77.88%
+DEBUG:root:Recall = 64.41%
+DEBUG:root:F1 Score (weighted): 35.21%
+DEBUG:root:F1 Score (unweighted): 42.34%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,049
+DEBUG:root:Accuracy = 78.49%
+DEBUG:root:Precision = 56.11%
+DEBUG:root:Recall = 45.86%
+DEBUG:root:F1 Score (weighted): 62.78%
+DEBUG:root:F1 Score (unweighted): 70.51%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,344
+DEBUG:root:F1 Score (weighted): 52.77%
+DEBUG:root:F1 Score (unweighted): 50.47%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_ATSC1v  cid_nR#C-  409
+0  644241  P08183         1  ...       5.501        0.0    0
+1  644241  P08684         1  ...       5.501        0.0    0
+2  644241  Q9Y6L6         1  ...       5.501        0.0    0
+3  644241  P00519         1  ...       5.501        0.0    0
+4    5279  Q9NRP7         1  ...       6.965        0.0    0
+
+[5 rows x 2769 columns]
+DEBUG:root:Accuracy = 81.11%
+DEBUG:root:Precision = 77.72%
+DEBUG:root:Recall = 29.36%
+DEBUG:root:Successfully created the directory results/dim_red_weights 
+DEBUG:root:sample_activity_score (0.07) features shape: (80353, 12610)
+DEBUG:root:Dropped 572 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 80,353, columns: 12,038
+DEBUG:root:X with non-features dropped - rows: 80,353, columns: 12,032
+DEBUG:root:F1 Score (weighted): 35.32%
+DEBUG:root:F1 Score (unweighted): 42.62%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,344
+DEBUG:root:rows: 18,945, columns: 1,316
+DEBUG:root:Accuracy = 79.92%
+DEBUG:root:Precision = 69.12%
+DEBUG:root:Recall = 28.83%
+DEBUG:root:Accuracy = 78.37%
+DEBUG:root:Precision = 55.79%
+DEBUG:root:Recall = 45.68%
+DEBUG:root:F1 Score (weighted): 52.64%
+DEBUG:root:F1 Score (unweighted): 50.23%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  1674_3242  3134  674_3095
+0  644241  P08183         1  ...          0     0         0
+1  644241  P08684         1  ...          0     0         0
+2  644241  Q9Y6L6         1  ...          0     0         0
+3  644241  P00519         1  ...          0     0         0
+4    5279  Q9NRP7         1  ...          0     0         0
+
+[5 rows x 3656 columns]
+DEBUG:root:Successfully created the directory results/no_weights 
+DEBUG:root:F1 Score (weighted): 36.83%
+DEBUG:root:F1 Score (unweighted): 40.69%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:sample_activity_score (0.07) features shape: (80353, 12610)
+DEBUG:root:Dropped 572 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 80,353, columns: 12,038
+DEBUG:root:X with non-features dropped - rows: 80,353, columns: 12,032
+DEBUG:root:rows: 18,945, columns: 1,316
+DEBUG:root:Accuracy = 78.89%
+DEBUG:root:Precision = 56.76%
+DEBUG:root:Recall = 48.88%
+DEBUG:root:F1 Score (weighted): 56.51%
+DEBUG:root:F1 Score (unweighted): 52.53%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  1674_3242  3134  674_3095
+0  644241  P08183         1  ...          0     0         0
+1  644241  P08684         1  ...          0     0         0
+2  644241  Q9Y6L6         1  ...          0     0         0
+3  644241  P00519         1  ...          0     0         0
+4    5279  Q9NRP7         1  ...          0     0         0
+
+[5 rows x 3656 columns]
+DEBUG:root:Successfully created the directory results/training_weights 
+DEBUG:root:sample_activity_score (0.07) features shape: (80353, 12610)
+DEBUG:root:Dropped 572 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 80,353, columns: 12,038
+DEBUG:root:X with non-features dropped - rows: 80,353, columns: 12,032
+DEBUG:root:number of most important features: 2,764
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 80,353, columns: 1,715
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_F07[N-F]  cid_SpDiam_Dz(v)  2749
+0    204106  Q9UP65         1  ...           0.0           518.517     0
+1    204106  P47712         0  ...           0.0           518.517     0
+2  10290302  Q9UP65         1  ...           0.0           495.173     0
+3  10290302  P00403         1  ...           0.0           495.173     0
+4  10290302  P00395         1  ...           0.0           495.173     0
+
+[5 rows x 1715 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 80,353, columns: 1,057
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  HAF_VAF  RNR_MNR  [G5.2.1.25]
+0    204106  Q9UP65         1  ...    False    False   106.920195
+1    204106  P47712         0  ...    False    False   150.159135
+2  10290302  Q9UP65         1  ...    False    False   106.920195
+3  10290302  P00403         1  ...    False    False    41.167204
+4  10290302  P00395         1  ...    False    False   104.247031
+
+[5 rows x 1057 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,768
+DEBUG:root:Accuracy = 87.58%
+DEBUG:root:Precision = 79.91%
+DEBUG:root:Recall = 64.15%
+DEBUG:root:number of most important features: 2,764
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 80,353, columns: 1,715
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_F07[N-F]  cid_SpDiam_Dz(v)  2749
+0    204106  Q9UP65         1  ...           0.0           518.517     0
+1    204106  P47712         0  ...           0.0           518.517     0
+2  10290302  Q9UP65         1  ...           0.0           495.173     0
+3  10290302  P00403         1  ...           0.0           495.173     0
+4  10290302  P00395         1  ...           0.0           495.173     0
+
+[5 rows x 1715 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 80,353, columns: 1,057
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  HAF_VAF  RNR_MNR  [G5.2.1.25]
+0    204106  Q9UP65         1  ...    False    False   106.920195
+1    204106  P47712         0  ...    False    False   150.159135
+2  10290302  Q9UP65         1  ...    False    False   106.920195
+3  10290302  P00403         1  ...    False    False    41.167204
+4  10290302  P00395         1  ...    False    False   104.247031
+
+[5 rows x 1057 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 62.98%
+DEBUG:root:F1 Score (unweighted): 71.17%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:number of most important features: 3,646
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 80,353, columns: 2,326
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  236  848  830_4010_3072
+0    204106  Q9UP65         1  ...    0    0              0
+1    204106  P47712         0  ...    0    0              0
+2  10290302  Q9UP65         1  ...    0    0              1
+3  10290302  P00403         1  ...    0    0              1
+4  10290302  P00395         1  ...    0    0              1
+
+[5 rows x 2326 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 80,353, columns: 1,328
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  HPQ_MPQ    KDN    VDN
+0    204106  Q9UP65         1  ...    False  False  False
+1    204106  P47712         0  ...    False  False  False
+2  10290302  Q9UP65         1  ...    False  False  False
+3  10290302  P00403         1  ...    False  False  False
+4  10290302  P00395         1  ...    False  False  False
+
+[5 rows x 1328 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,715
+DEBUG:root:Accuracy = 79.67%
+DEBUG:root:Precision = 68.25%
+DEBUG:root:Recall = 27.88%
+DEBUG:root:rows: 18,945, columns: 2,768
+DEBUG:root:Accuracy = 88.15%
+DEBUG:root:Precision = 84.98%
+DEBUG:root:Recall = 61.23%
+DEBUG:root:F1 Score (weighted): 37.01%
+DEBUG:root:F1 Score (unweighted): 39.59%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 3,646
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 80,353, columns: 2,326
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  236  848  830_4010_3072
+0    204106  Q9UP65         1  ...    0    0              0
+1    204106  P47712         0  ...    0    0              0
+2  10290302  Q9UP65         1  ...    0    0              1
+3  10290302  P00403         1  ...    0    0              1
+4  10290302  P00395         1  ...    0    0              1
+
+[5 rows x 2326 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 80,353, columns: 1,328
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  HPQ_MPQ    KDN    VDN
+0    204106  Q9UP65         1  ...    False  False  False
+1    204106  P47712         0  ...    False  False  False
+2  10290302  Q9UP65         1  ...    False  False  False
+3  10290302  P00403         1  ...    False  False  False
+4  10290302  P00395         1  ...    False  False  False
+
+[5 rows x 1328 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,057
+DEBUG:root:Accuracy = 80.18%
+DEBUG:root:Precision = 60.94%
+DEBUG:root:Recall = 47.56%
+DEBUG:root:F1 Score (weighted): 62.20%
+DEBUG:root:F1 Score (unweighted): 71.18%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 56.85%
+DEBUG:root:F1 Score (unweighted): 53.42%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_F07[N-F]  cid_SpDiam_Dz(v)  2749
+0  644241  P08183         1  ...           3.0           426.372     0
+1  644241  P08684         1  ...           3.0           426.372     0
+2  644241  Q9Y6L6         1  ...           3.0           426.372     0
+3  644241  P00519         1  ...           3.0           426.372     0
+4    5279  Q9NRP7         1  ...           0.0           195.313     0
+
+[5 rows x 2768 columns]
+DEBUG:root:Successfully created the directory results/all_weights 
+DEBUG:root:sample_activity_score (0.06) features shape: (83540, 12610)
+DEBUG:root:Dropped 570 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 83,540, columns: 12,040
+DEBUG:root:X with non-features dropped - rows: 83,540, columns: 12,034
+DEBUG:root:rows: 18,945, columns: 3,650
+DEBUG:root:Accuracy = 88.10%
+DEBUG:root:Precision = 85.35%
+DEBUG:root:Recall = 60.61%
+DEBUG:root:rows: 18,945, columns: 1,715
+DEBUG:root:Accuracy = 80.90%
+DEBUG:root:Precision = 77.40%
+DEBUG:root:Recall = 28.36%
+DEBUG:root:F1 Score (weighted): 34.65%
+DEBUG:root:F1 Score (unweighted): 41.51%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 62.50%
+DEBUG:root:F1 Score (unweighted): 70.89%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 3,650
+DEBUG:root:Accuracy = 87.48%
+DEBUG:root:Precision = 79.71%
+DEBUG:root:Recall = 63.88%
+DEBUG:root:rows: 18,945, columns: 1,057
+DEBUG:root:Accuracy = 79.92%
+DEBUG:root:Precision = 60.93%
+DEBUG:root:Recall = 44.47%
+DEBUG:root:F1 Score (weighted): 53.28%
+DEBUG:root:F1 Score (unweighted): 51.41%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_F07[N-F]  cid_SpDiam_Dz(v)  2749
+0  644241  P08183         1  ...           3.0           426.372     0
+1  644241  P08684         1  ...           3.0           426.372     0
+2  644241  Q9Y6L6         1  ...           3.0           426.372     0
+3  644241  P00519         1  ...           3.0           426.372     0
+4    5279  Q9NRP7         1  ...           0.0           195.313     0
+
+[5 rows x 2768 columns]
+DEBUG:root:Successfully created the directory results/dim_red_weights 
+DEBUG:root:sample_activity_score (0.06) features shape: (83540, 12610)
+DEBUG:root:Dropped 570 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 83,540, columns: 12,040
+DEBUG:root:X with non-features dropped - rows: 83,540, columns: 12,034
+DEBUG:root:rows: 18,945, columns: 2,326
+DEBUG:root:Accuracy = 81.09%
+DEBUG:root:Precision = 79.35%
+DEBUG:root:Recall = 28.19%
+DEBUG:root:F1 Score (weighted): 63.23%
+DEBUG:root:F1 Score (unweighted): 70.93%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 33.84%
+DEBUG:root:F1 Score (unweighted): 41.60%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,328
+DEBUG:root:Accuracy = 79.77%
+DEBUG:root:Precision = 60.52%
+DEBUG:root:Recall = 44.16%
+DEBUG:root:rows: 18,945, columns: 2,326
+DEBUG:root:Accuracy = 79.85%
+DEBUG:root:Precision = 68.90%
+DEBUG:root:Recall = 28.58%
+DEBUG:root:F1 Score (weighted): 53.00%
+DEBUG:root:F1 Score (unweighted): 51.06%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  848  830_4010_3072    VDN
+0  644241  P08183         1  ...    0              0  False
+1  644241  P08684         1  ...    0              0  False
+2  644241  Q9Y6L6         1  ...    0              0  False
+3  644241  P00519         1  ...    0              0  False
+4    5279  Q9NRP7         1  ...    0              0  False
+
+[5 rows x 3650 columns]
+DEBUG:root:Successfully created the directory results/no_weights 
+DEBUG:root:sample_activity_score (0.06) features shape: (83540, 12610)
+DEBUG:root:Dropped 570 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 83,540, columns: 12,040
+DEBUG:root:X with non-features dropped - rows: 83,540, columns: 12,034
+DEBUG:root:F1 Score (weighted): 36.95%
+DEBUG:root:F1 Score (unweighted): 40.41%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,328
+DEBUG:root:Accuracy = 80.11%
+DEBUG:root:Precision = 60.58%
+DEBUG:root:Recall = 47.93%
+DEBUG:root:F1 Score (weighted): 56.98%
+DEBUG:root:F1 Score (unweighted): 53.52%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  848  830_4010_3072    VDN
+0  644241  P08183         1  ...    0              0  False
+1  644241  P08684         1  ...    0              0  False
+2  644241  Q9Y6L6         1  ...    0              0  False
+3  644241  P00519         1  ...    0              0  False
+4    5279  Q9NRP7         1  ...    0              0  False
+
+[5 rows x 3650 columns]
+DEBUG:root:Successfully created the directory results/training_weights 
+DEBUG:root:sample_activity_score (0.06) features shape: (83540, 12610)
+DEBUG:root:Dropped 570 columns that have zero variance.
+DEBUG:root:Shape after dropping zero-variance columns - rows: 83,540, columns: 12,040
+DEBUG:root:X with non-features dropped - rows: 83,540, columns: 12,034
+DEBUG:root:number of most important features: 2,729
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 83,540, columns: 1,715
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_VE3_B(v)  1984  cid_nDB
+0    204106  Q9UP65         1  ...         3.302     0        3
+1    204106  P47712         0  ...         3.302     0        3
+2  10290302  Q9UP65         1  ...         3.335     0        3
+3  10290302  P00403         1  ...         3.335     0        3
+4  10290302  P00395         1  ...         3.335     0        3
+
+[5 rows x 1715 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 83,540, columns: 1,022
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    SEG  [G4.3.8.13]  KYT_SYT
+0    204106  Q9UP65         1  ...  False   100.000000    False
+1    204106  P47712         0  ...  False   100.000000    False
+2  10290302  Q9UP65         1  ...  False   100.000000    False
+3  10290302  P00403         1  ...  False    97.797357    False
+4  10290302  P00395         1  ...  False    98.050682    False
+
+[5 rows x 1022 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 2,733
+DEBUG:root:Accuracy = 87.65%
+DEBUG:root:Precision = 80.59%
+DEBUG:root:Recall = 63.66%
+DEBUG:root:F1 Score (weighted): 63.46%
+DEBUG:root:F1 Score (unweighted): 71.13%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:number of most important features: 2,729
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 83,540, columns: 1,715
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_VE3_B(v)  1984  cid_nDB
+0    204106  Q9UP65         1  ...         3.302     0        3
+1    204106  P47712         0  ...         3.302     0        3
+2  10290302  Q9UP65         1  ...         3.335     0        3
+3  10290302  P00403         1  ...         3.335     0        3
+4  10290302  P00395         1  ...         3.335     0        3
+
+[5 rows x 1715 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 83,540, columns: 1,022
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...    SEG  [G4.3.8.13]  KYT_SYT
+0    204106  Q9UP65         1  ...  False   100.000000    False
+1    204106  P47712         0  ...  False   100.000000    False
+2  10290302  Q9UP65         1  ...  False   100.000000    False
+3  10290302  P00403         1  ...  False    97.797357    False
+4  10290302  P00395         1  ...  False    98.050682    False
+
+[5 rows x 1022 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,715
+DEBUG:root:Accuracy = 79.71%
+DEBUG:root:Precision = 68.51%
+DEBUG:root:Recall = 27.97%
+DEBUG:root:F1 Score (weighted): 36.70%
+DEBUG:root:F1 Score (unweighted): 39.72%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:number of most important features: 3,766
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 83,540, columns: 2,439
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_GGI2  cid_C-017  cid_H_Dz(e)
+0    204106  Q9UP65         1  ...     5.556        0.0      336.415
+1    204106  P47712         0  ...     5.556        0.0      336.415
+2  10290302  Q9UP65         1  ...     5.778        0.0      331.025
+3  10290302  P00403         1  ...     5.778        0.0      331.025
+4  10290302  P00395         1  ...     5.778        0.0      331.025
+
+[5 rows x 2439 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 83,540, columns: 1,335
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  YSN_FSN    STT    GSP
+0    204106  Q9UP65         1  ...    False  False  False
+1    204106  P47712         0  ...    False   True  False
+2  10290302  Q9UP65         1  ...    False  False  False
+3  10290302  P00403         1  ...    False  False  False
+4  10290302  P00395         1  ...    False  False  False
+
+[5 rows x 1335 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,022
+DEBUG:root:Accuracy = 81.42%
+DEBUG:root:Precision = 65.58%
+DEBUG:root:Recall = 46.81%
+DEBUG:root:rows: 18,945, columns: 2,733
+DEBUG:root:Accuracy = 88.27%
+DEBUG:root:Precision = 86.28%
+DEBUG:root:Recall = 60.55%
+DEBUG:root:F1 Score (weighted): 57.30%
+DEBUG:root:F1 Score (unweighted): 54.63%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_VE3_B(v)  1984  cid_nDB
+0  644241  P08183         1  ...         2.949     0        1
+1  644241  P08684         1  ...         2.949     0        1
+2  644241  Q9Y6L6         1  ...         2.949     0        1
+3  644241  P00519         1  ...         2.949     0        1
+4    5279  Q9NRP7         1  ...         2.097     0        1
+
+[5 rows x 2733 columns]
+DEBUG:root:Successfully created the directory results/all_weights 
+DEBUG:root:F1 Score (weighted): 62.87%
+DEBUG:root:F1 Score (unweighted): 71.16%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:number of most important features: 3,766
+DEBUG:root:drug_features/dragon_features.csv: columns: 3,839
+DEBUG:root:drug_features/fingerprints.csv: columns: 2,850
+DEBUG:root:6,490 drug featues
+DEBUG:root:df_drugs - rows: 83,540, columns: 2,439
+DEBUG:root:cid features:
+DEBUG:root:        cid     pid  activity  ...  cid_GGI2  cid_C-017  cid_H_Dz(e)
+0    204106  Q9UP65         1  ...     5.556        0.0      336.415
+1    204106  P47712         0  ...     5.556        0.0      336.415
+2  10290302  Q9UP65         1  ...     5.778        0.0      331.025
+3  10290302  P00403         1  ...     5.778        0.0      331.025
+4  10290302  P00395         1  ...     5.778        0.0      331.025
+
+[5 rows x 2439 columns]
+DEBUG:root:protein_features/binding_sites.csv: columns: 5,258
+DEBUG:root:protein_features/expasy.csv: columns: 7
+DEBUG:root:protein_features/profeat.csv: columns: 849
+DEBUG:root:6,114 protein featues
+DEBUG:root:df_proteins - rows: 83,540, columns: 1,335
+DEBUG:root:pid features:
+DEBUG:root:        cid     pid  activity  ...  YSN_FSN    STT    GSP
+0    204106  Q9UP65         1  ...    False  False  False
+1    204106  P47712         0  ...    False   True  False
+2  10290302  Q9UP65         1  ...    False  False  False
+3  10290302  P00403         1  ...    False  False  False
+4  10290302  P00395         1  ...    False  False  False
+
+[5 rows x 1335 columns]
+DEBUG:root:cid/pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,715
+DEBUG:root:Accuracy = 80.88%
+DEBUG:root:Precision = 77.88%
+DEBUG:root:Recall = 27.92%
+DEBUG:root:rows: 18,945, columns: 3,770
+DEBUG:root:Accuracy = 88.32%
+DEBUG:root:Precision = 86.73%
+DEBUG:root:Recall = 60.37%
+DEBUG:root:F1 Score (weighted): 34.14%
+DEBUG:root:F1 Score (unweighted): 41.11%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,022
+DEBUG:root:Accuracy = 81.43%
+DEBUG:root:Precision = 67.00%
+DEBUG:root:Recall = 43.91%
+DEBUG:root:F1 Score (weighted): 62.84%
+DEBUG:root:F1 Score (unweighted): 71.19%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 53.97%
+DEBUG:root:F1 Score (unweighted): 53.06%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_VE3_B(v)  1984  cid_nDB
+0  644241  P08183         1  ...         2.949     0        1
+1  644241  P08684         1  ...         2.949     0        1
+2  644241  Q9Y6L6         1  ...         2.949     0        1
+3  644241  P00519         1  ...         2.949     0        1
+4    5279  Q9NRP7         1  ...         2.097     0        1
+
+[5 rows x 2733 columns]
+DEBUG:root:Successfully created the directory results/dim_red_weights 
+DEBUG:root:rows: 18,945, columns: 3,770
+DEBUG:root:Accuracy = 87.75%
+DEBUG:root:Precision = 81.01%
+DEBUG:root:Recall = 63.68%
+DEBUG:root:rows: 18,945, columns: 2,439
+DEBUG:root:Accuracy = 80.98%
+DEBUG:root:Precision = 78.62%
+DEBUG:root:Recall = 28.03%
+DEBUG:root:F1 Score (weighted): 63.45%
+DEBUG:root:F1 Score (unweighted): 71.31%
+DEBUG:root:cid with activity score weighting, results:
+DEBUG:root:F1 Score (weighted): 34.39%
+DEBUG:root:F1 Score (unweighted): 41.33%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,335
+DEBUG:root:Accuracy = 81.25%
+DEBUG:root:Precision = 66.38%
+DEBUG:root:Recall = 43.65%
+DEBUG:root:rows: 18,945, columns: 2,439
+DEBUG:root:Accuracy = 79.99%
+DEBUG:root:Precision = 69.91%
+DEBUG:root:Recall = 28.58%
+DEBUG:root:F1 Score (weighted): 53.91%
+DEBUG:root:F1 Score (unweighted): 52.67%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_GGI2  cid_C-017  cid_H_Dz(e)
+0  644241  P08183         1  ...     4.444        0.0      239.865
+1  644241  P08684         1  ...     4.444        0.0      239.865
+2  644241  Q9Y6L6         1  ...     4.444        0.0      239.865
+3  644241  P00519         1  ...     4.444        0.0      239.865
+4    5279  Q9NRP7         1  ...     4.667        0.0      246.930
+
+[5 rows x 3770 columns]
+DEBUG:root:Successfully created the directory results/no_weights 
+DEBUG:root:F1 Score (weighted): 37.11%
+DEBUG:root:F1 Score (unweighted): 40.58%
+DEBUG:root:pid combined with activity score weighting, results:
+DEBUG:root:rows: 18,945, columns: 1,335
+DEBUG:root:Accuracy = 81.60%
+DEBUG:root:Precision = 66.16%
+DEBUG:root:Recall = 47.07%
+DEBUG:root:F1 Score (weighted): 57.44%
+DEBUG:root:F1 Score (unweighted): 55.01%
+DEBUG:root:validation observations:
+DEBUG:root:      cid     pid  activity  ...  cid_GGI2  cid_C-017  cid_H_Dz(e)
+0  644241  P08183         1  ...     4.444        0.0      239.865
+1  644241  P08684         1  ...     4.444        0.0      239.865
+2  644241  Q9Y6L6         1  ...     4.444        0.0      239.865
+3  644241  P00519         1  ...     4.444        0.0      239.865
+4    5279  Q9NRP7         1  ...     4.667        0.0      246.930
+
+[5 rows x 3770 columns]
+DEBUG:root:Successfully created the directory results/training_weights 
