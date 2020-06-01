@@ -224,6 +224,8 @@ class XGBoostClassifier():
         logging.debug('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
         X.columns = list(range(0, len(X.columns)))
 
+        self.set_pos_weight_param(df_features)
+
         # train
         sample_weight = None
         if use_dimension_reduction_weights == True:
@@ -343,6 +345,14 @@ class XGBoostClassifier():
     pid_cid_loss = self.log_loss_(training_labels, pid_cid_predictions)
     return np.clip(pid_cid_loss, 0.0, max_loss)
 
+  def set_pos_weight_param(self, df):
+    num_active = len(df[df['activity']==1.0])
+    num_inactive = len(df) - num_active
+
+    if (num_inactive > num_active and num_active > 0):
+      self.scale_pos_weight = round(num_inactive/num_active)
+    else:
+      self.scale_pos_weight = 1.0
 
   '''
   ==================================================================
@@ -439,6 +449,7 @@ class XGBoostClassifier():
       result.append(combined_results[i]['f1_score_weighted'])
       result.append(combined_results[i]['f1_score_unweighted'])
 
+      result.append(self.scale_pos_weight)
       result.append(self.learning_rate)
       result.append(self.n_estimators)
       result.append(self.objective)
@@ -461,6 +472,7 @@ class XGBoostClassifier():
       'recall',
       'f1_score_weighted',
       'f1_score_unweighted',
+      'xgb_scale_pos_weight',
       'xgb_learning_rate',
       'xgb_n_estimators',
       'xgb_objective',
@@ -876,7 +888,8 @@ class XGBoostClassifier():
     return pid_features
 
   def __get_xgb(self):
-    xgb = XGBClassifier(learning_rate=self.learning_rate, 
+    xgb = XGBClassifier(scale_pos_weight=self.scale_pos_weight,
+                        learning_rate=self.learning_rate, 
                         n_estimators=self.n_estimators, 
                         objective=self.objective,
                         subsample=self.subsample,
