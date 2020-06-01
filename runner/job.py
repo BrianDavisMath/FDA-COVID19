@@ -27,10 +27,10 @@ Inputs are:
   [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
-  [-d] use_dimension_reduction_weights - [True|False] whether to use sample_activity_score 
+  [-d] use_dimension_reduction_weights - [True|False] whether to use activity_score 
   for sample_weight when training XGBoost for feature selection
 
-  [-t] use_training_weights - [True|False] whether to use sample_activity_score 
+  [-t] use_training_weights - [True|False] whether to use activity_score 
   for sample_weight when training XGBoost for activity classification
 
   [-n] name - job name used to place results in a directory of that name
@@ -126,7 +126,7 @@ class XGBoostClassifier():
       self.job_name = job_name
 
       self.bad_dragon_cols = []
-      self.non_feature_columns = ['index', 'activity', 'cid', 'pid', 'expanding_mean', 'sample_activity_score']
+      self.non_feature_columns = ['activity', 'cid', 'pid', 'activity_score']
 
       # XGBoost parameters
       self.learning_rate=0.02
@@ -164,8 +164,8 @@ class XGBoostClassifier():
       gc.collect()
 
       while activity_threshold > self.activity_threshold_stop:
-        df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
-        logging.debug('sample_activity_score ({}) features shape: {}'
+        df_features = self.training_features[self.training_features['activity_score'] > activity_threshold]
+        logging.debug('activity_score ({}) features shape: {}'
           .format(activity_threshold, df_features.shape))
 
         # drop zero-variance columns
@@ -194,14 +194,14 @@ class XGBoostClassifier():
         # train
         sample_weight = None
         if use_dimension_reduction_weights == True:
-          sample_weight = df_features['sample_activity_score']
+          sample_weight = df_features['activity_score']
         xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
         # get features
         xgb_features = self.__get_features(xgb, df_features)
         top_feature_cols = list(xgb_features['feature'].values)
         logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
-        df = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+top_feature_cols]
+        df = df_features[['cid', 'pid', 'activity', 'activity_score']+top_feature_cols]
         del df_features
         df_features = df
 
@@ -209,7 +209,7 @@ class XGBoostClassifier():
         drug_column_names = self.__get_drug_column_names()
         cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
-        df_drugs = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+cid_features]
+        df_drugs = df_features[['cid', 'pid', 'activity', 'activity_score']+cid_features]
         logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
         logging.debug('cid features:')
         logging.debug(df_drugs.head())
@@ -217,7 +217,7 @@ class XGBoostClassifier():
         # pid set with subset of features derived from previous cid/pid combined dimension reduction
         protein_column_names = self.__get_protein_column_names()
         pid_features = [col for col in top_feature_cols if col in protein_column_names]
-        df_proteins = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+pid_features]
+        df_proteins = df_features[['cid', 'pid', 'activity', 'activity_score']+pid_features]
         logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
         logging.debug('pid features:')
         logging.debug(df_proteins.head())
@@ -433,7 +433,7 @@ class XGBoostClassifier():
       result.append(row['cid'])
       result.append(row['pid'])
       result.append(row['activity'])
-      result.append(row['sample_activity_score'])
+      result.append(row['activity_score'])
       result.append(validation_weights[index])
 
       cid_only_probability = drugs_model_results['probabilities'][index][1]
@@ -454,7 +454,7 @@ class XGBoostClassifier():
       'cid',
       'pid',
       'activity',
-      'sample_activity_score',
+      'activity_score',
       'validation_weight',
       'cid_only_predict_proba',
       'pid_only_predict_proba',
@@ -589,8 +589,6 @@ class XGBoostClassifier():
     df_interactions = self.__load_data(
       self.data_loc+'training_validation_split/' + split_file_name)
 
-    # Rename the 'canonical_cid' column simply to 'cid' to simplifiy joining to the other feature sets later.
-    df_interactions.rename(columns={"canonical_cid": "cid"}, inplace=True)
     logging.debug(df_interactions.head())
     
     # Get the individual feature sets
@@ -827,7 +825,7 @@ class XGBoostClassifier():
 
     sample_weight = None
     if use_weights == True:
-      sample_weight = df_in['sample_activity_score']
+      sample_weight = df_in['activity_score']
 
     model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
     del X
