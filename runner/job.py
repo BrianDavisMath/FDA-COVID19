@@ -284,9 +284,6 @@ class XGBoostClassifier():
 
         roc_result = self.weightedROCAUC.score(prediction_model_probs, max_loss=5.0)
         roc_results.append(roc_result)
-        print('****************************')
-        print(roc_results)
-
 
         combined_results.append(combined_model_results)
         drugs_results.append(drugs_model_results)
