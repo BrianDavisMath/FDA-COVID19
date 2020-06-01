@@ -110,11 +110,10 @@ logging.getLogger().addHandler(ch)
 
 
 class WeightedROCAUC:
-  def __init__(self, pid_only_predict_probs, cid_only_predict_probs, validation_labels, training_weights, classifier):
+  def __init__(self, pid_only_predict_probs, cid_only_predict_probs, validation_labels, classifier):
     self.pid_probs = pid_only_predict_probs
     self.cid_probs = cid_only_predict_probs
     self.labels = validation_labels
-    self.training_weights = training_weights
     self.classifier = classifier
     pid_cid_probs = np.vstack([self.pid_probs, self.cid_probs]).transpose()
     composite_model = LogisticRegression(random_state=0).fit(pid_cid_probs, self.labels)
@@ -122,11 +121,11 @@ class WeightedROCAUC:
 
     self.composite_gain_ = np.vectorize(self.composite_gain_)
   
-  def composite_gain_(self, prediction_loss, composite_loss, training_weight):
+  def composite_gain_(self, prediction_loss, composite_loss):
     if (prediction_loss == 0) and (composite_loss == 0):
         return 0
     else:
-        return 0.5 * (1 + (training_weight - prediction_loss) / (training_weight + prediction_loss))
+        return 0.5 * (1 + (composite_loss - prediction_loss) / (composite_loss + prediction_loss))
 
   def score(self, prediction_model_probs, max_loss=5.0):
     prediction_loss = self.classifier.log_loss_(self.labels, prediction_model_probs)
@@ -134,7 +133,7 @@ class WeightedROCAUC:
     composite_loss = self.classifier.log_loss_(self.labels, self.composite_predictions)
     composite_loss = np.clip(composite_loss, 0.0, max_loss)
 
-    validation_weights = self.composite_gain_(prediction_loss, composite_loss, self.training_weights)
+    validation_weights = self.composite_gain_(prediction_loss, composite_loss)
     return roc_auc_score(self.labels, prediction_model_probs, sample_weight=validation_weights)
 
 
@@ -280,7 +279,7 @@ class XGBoostClassifier():
         # Target metric
         prediction_model_probs = combined_model_results['probabilities'][:, 1]
         self.weightedROCAUC = WeightedROCAUC(pid_only_predict_probs, 
-          cid_only_predict_probs, validation_labels, self.training_weights, self)
+          cid_only_predict_probs, validation_labels, self)
 
         roc_result = self.weightedROCAUC.score(prediction_model_probs, max_loss=5.0)
         roc_results.append(roc_result)
