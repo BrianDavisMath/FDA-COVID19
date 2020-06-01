@@ -99,13 +99,44 @@ from sklearn.metrics import accuracy_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
-
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
 from xgboost import XGBClassifier
 
 logging.basicConfig(filename='job.log',level=logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.DEBUG)
 logging.getLogger().addHandler(ch)
+
+
+class WeightedROCAUC:
+  def __init__(self, pid_only_predict_probs, cid_only_predict_probs, validation_labels, training_weights, classifier):
+    self.pid_probs = pid_only_predict_probs
+    self.cid_probs = cid_only_predict_probs
+    self.labels = validation_labels
+    self.training_weights = training_weights
+    self.classifier = classifier
+    pid_cid_probs = np.vstack([self.pid_probs, self.cid_probs]).transpose()
+    composite_model = LogisticRegression(random_state=0).fit(pid_cid_probs, self.labels)
+    self.composite_predictions = composite_model.predict_proba(pid_cid_probs)[:, 1]
+
+    self.composite_gain_ = np.vectorize(self.composite_gain_)
+  
+  def composite_gain_(self, prediction_loss, composite_loss, training_weight):
+    if (prediction_loss == 0) and (composite_loss == 0):
+        return 0
+    else:
+        return 0.5 * (1 + (training_weight - prediction_loss) / (training_weight + prediction_loss))
+
+  def score(self, prediction_model_probs, max_loss=5.0):
+    prediction_loss = self.classifier.log_loss_(self.labels, prediction_model_probs)
+    prediction_loss = np.clip(prediction_loss, 0.0, max_loss)
+    composite_loss = self.classifier.log_loss_(self.labels, self.composite_predictions)
+    composite_loss = np.clip(composite_loss, 0.0, max_loss)
+
+    validation_weights = self.composite_gain_(prediction_loss, composite_loss, self.training_weights)
+    return roc_auc_score(self.labels, prediction_model_probs, sample_weight=validation_weights)
+
 
 class XGBoostClassifier():
     
@@ -124,6 +155,8 @@ class XGBoostClassifier():
       self.activity_threshold_stop = float(activity_threshold_stop)
       self.data_loc = data_folder
       self.job_name = job_name
+
+      self.log_loss_ = np.vectorize(self.log_loss_)
 
       self.bad_dragon_cols = []
       self.non_feature_columns = ['activity', 'cid', 'pid', 'activity_score']
@@ -160,6 +193,7 @@ class XGBoostClassifier():
       drugs_results = []
       proteins_results = []
       thresholds = []
+      roc_results = []
 
       gc.collect()
 
@@ -223,14 +257,36 @@ class XGBoostClassifier():
         logging.debug(df_proteins.head())
 
         # Run models
+        logging.debug('cid with activity score weighting, results:')
+        drugs_model_results = self.__train_and_eval(df_drugs, df_validation, use_weights=False)
+
+        logging.debug('pid combined with activity score weighting, results:')
+        proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=False)
+
+        # Training weights
+        pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
+        cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
+        validation_labels = df_validation['activity'].values
+
+        self.training_weights = self.generate_training_weights(
+        pid_only_predict_probs, 
+        cid_only_predict_probs,
+        validation_labels, max_loss=5.0)
+
+        # Combined model results
         logging.debug('cid/pid combined with activity score weighting, results:')
         combined_model_results = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
 
-        logging.debug('cid with activity score weighting, results:')
-        drugs_model_results = self.__train_and_eval(df_drugs, df_validation, use_weights=use_training_weights)
+        # Target metric
+        prediction_model_probs = combined_model_results['probabilities'][:, 1]
+        self.weightedROCAUC = WeightedROCAUC(pid_only_predict_probs, 
+          cid_only_predict_probs, validation_labels, self.training_weights, self)
 
-        logging.debug('pid combined with activity score weighting, results:')
-        proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
+        roc_result = self.weightedROCAUC.score(prediction_model_probs, max_loss=5.0)
+        roc_results.append(roc_result)
+        print('****************************')
+        print(roc_results)
+
 
         combined_results.append(combined_model_results)
         drugs_results.append(drugs_model_results)
@@ -273,7 +329,23 @@ class XGBoostClassifier():
         use_training_weights,
         combined_results,
         drugs_results,
-        proteins_results)
+        proteins_results,
+        roc_results)
+
+
+  def log_loss_(self, true_label, predicted):
+    if true_label == 1:
+        return -np.log(predicted)
+    else:
+        return -np.log(1 - predicted)
+
+  def generate_training_weights(self, pid_only_predict_probs, cid_only_predict_prob, training_labels, max_loss=5.0):
+    # For use on training data
+    X_pid_cid = np.vstack([pid_only_predict_probs, cid_only_predict_prob]).transpose()
+    pid_cid_model = LogisticRegression(random_state=0).fit(X_pid_cid, training_labels)
+    pid_cid_predictions = pid_cid_model.predict_proba(X_pid_cid)[:, 1]
+    pid_cid_loss = self.log_loss_(training_labels, pid_cid_predictions)
+    return np.clip(pid_cid_loss, 0.0, max_loss)
 
 
   '''
@@ -351,7 +423,8 @@ class XGBoostClassifier():
     used_training_weights,
     combined_results,
     drugs_results,
-    proteins_results):
+    proteins_results,
+    roc_results):
 
     results = []
 
@@ -361,6 +434,8 @@ class XGBoostClassifier():
       result.append(activity_thresholds[i])
       result.append(used_dimension_reduction_weights)
       result.append(used_training_weights)
+
+      result.append(roc_results[i])
 
       result.append(combined_results[i]['accuracy'])
       result.append(combined_results[i]['precision'])
@@ -384,6 +459,7 @@ class XGBoostClassifier():
       'run_threshold',
       'used_dim_red_weights',
       'used_training_weights',
+      'weighted_roc_auc',
       'accuracy',
       'precision',
       'recall',
@@ -825,7 +901,8 @@ class XGBoostClassifier():
 
     sample_weight = None
     if use_weights == True:
-      sample_weight = df_in['activity_score']
+      #sample_weight = df_in['activity_score']
+      self.training_weights
 
     model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
     del X
