@@ -350,7 +350,7 @@ class XGBoostClassifier():
     num_inactive = len(df) - num_active
 
     if (num_inactive > num_active and num_active > 0):
-      self.scale_pos_weight = round(num_inactive/num_active)
+      self.scale_pos_weight = num_inactive/num_active
     else:
       self.scale_pos_weight = 1.0
 
