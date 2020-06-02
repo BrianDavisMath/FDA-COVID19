@@ -911,7 +911,7 @@ class XGBoostClassifier():
     sample_weight = None
     if use_weights == True:
       #sample_weight = df_in['activity_score']
-      self.training_weights
+      sample_weight = self.training_weights
 
     model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
     del X
