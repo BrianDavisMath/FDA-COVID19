@@ -265,14 +265,18 @@ class XGBoostClassifier():
         proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=False)
 
         # Training weights
+        pid_only_predict_train_probs = proteins_model_results['training_probabilities'][:, 1]
+        cid_only_predict_train_probs = drugs_model_results['training_probabilities'][:, 1]
+        training_labels = df_features['activity'].values
+
         pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
         cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
         validation_labels = df_validation['activity'].values
 
         self.training_weights = self.generate_training_weights(
-        pid_only_predict_probs, 
-        cid_only_predict_probs,
-        validation_labels, max_loss=5.0)
+          pid_only_predict_train_probs, 
+          cid_only_predict_train_probs,
+          training_labels, max_loss=5.0)
 
         # Combined model results
         logging.debug('cid/pid combined with activity score weighting, results:')
@@ -914,11 +918,13 @@ class XGBoostClassifier():
       sample_weight = self.training_weights
 
     model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
+    training_probabilities = model.predict_proba(X)
     del X
     del Y
 
     # load test data and gather metrics
     results = self.__gather_metrics(df_in, model, df_validation)
+    results['training_probabilities'] = training_probabilities
     return results
 
 
