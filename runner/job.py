@@ -134,7 +134,10 @@ class WeightedROCAUC:
     composite_loss = np.clip(composite_loss, 0.0, max_loss)
 
     validation_weights = self.composite_gain_(prediction_loss, composite_loss)
-    return roc_auc_score(self.labels, prediction_model_probs, sample_weight=validation_weights)
+    return {
+      'roc_auc_score': roc_auc_score(self.labels, prediction_model_probs, sample_weight=validation_weights),
+      'composite_gain': validation_weights
+    }
 
 
 class XGBoostClassifier():
@@ -269,10 +272,6 @@ class XGBoostClassifier():
         cid_only_predict_train_probs = drugs_model_results['training_probabilities'][:, 1]
         training_labels = df_features['activity'].values
 
-        pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
-        cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
-        validation_labels = df_validation['activity'].values
-
         self.training_weights = self.generate_training_weights(
           pid_only_predict_train_probs, 
           cid_only_predict_train_probs,
@@ -284,6 +283,12 @@ class XGBoostClassifier():
 
         # Target metric
         prediction_model_probs = combined_model_results['probabilities'][:, 1]
+        pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
+        cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
+        
+        # Validation labels must be in the correct order to match validation set probabilities.
+        validation_labels = combined_model_results['df_validation']['activity'].values
+        
         self.weightedROCAUC = WeightedROCAUC(pid_only_predict_probs, 
           cid_only_predict_probs, validation_labels, self)
 
@@ -301,7 +306,8 @@ class XGBoostClassifier():
           use_training_weights,
           combined_model_results,
           drugs_model_results,
-          proteins_model_results)
+          proteins_model_results,
+          roc_result)
 
         self.__importance_to_csv(
           run_id,
@@ -445,7 +451,7 @@ class XGBoostClassifier():
       result.append(used_dimension_reduction_weights)
       result.append(used_training_weights)
 
-      result.append(roc_results[i])
+      result.append(roc_results[i]['roc_auc_score'])
 
       result.append(combined_results[i]['accuracy'])
       result.append(combined_results[i]['precision'])
@@ -501,7 +507,8 @@ class XGBoostClassifier():
     used_training_weights,
     combined_model_results,
     drugs_model_results,
-    proteins_model_results):
+    proteins_model_results,
+    roc_results):
 
     df_validation = combined_model_results['df_validation']
     df_validation.reset_index(inplace=True, drop=True)
@@ -524,6 +531,8 @@ class XGBoostClassifier():
       result.append(row['activity_score'])
       result.append(validation_weights[index])
 
+      result.append(roc_results['composite_gain'][index])
+
       cid_only_probability = drugs_model_results['probabilities'][index][1]
       pid_only_probability = proteins_model_results['probabilities'][index][1]
       combined_probability = combined_model_results['probabilities'][index][1]
@@ -544,6 +553,7 @@ class XGBoostClassifier():
       'activity',
       'activity_score',
       'validation_weight',
+      'composite_gain',
       'cid_only_predict_proba',
       'pid_only_predict_proba',
       'combined_predict_proba'
