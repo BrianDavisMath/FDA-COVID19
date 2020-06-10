@@ -18,7 +18,7 @@ Inputs are:
   [-a] max_activity_threshold - used to sub-sample the training data for the
   first run
 
-  [-s] activity_threshold_step - the amount to reduced the activity threshold
+  [-s] activity_threshold_step - the amount to reduce the activity threshold
   on each run before sub-sampling the training data
 
   [-m] activity_threshold_stop - the value (+ activity_threshold_step) upon which the run
@@ -217,7 +217,7 @@ class XGBoostClassifier():
           format(len(df_features), len(df_features.columns)))
 
 
-        # Get important features using XGBoost
+        # Select features using XGBoost
         Y = df_features['activity'].values
         X = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
 
@@ -231,21 +231,20 @@ class XGBoostClassifier():
 
         # train
         sample_weight = None
-        if use_dimension_reduction_weights == True:
+        if use_dimension_reduction_weights:
           sample_weight = df_features['activity_score']
         xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
         # get features
-        xgb_features = self.__get_features(xgb, df_features)
-        top_feature_cols = list(xgb_features['feature'].values)
-        logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
-        df = df_features[['cid', 'pid', 'activity', 'activity_score']+top_feature_cols]
+        feature_cols = self.__get_features(xgb, df_features)
+        logging.debug('selected features: {:,}'.format(len(feature_cols)))
+        df = df_features[['cid', 'pid', 'activity', 'activity_score']+feature_cols]
         del df_features
         df_features = df
 
         # cid set with subset of features derived from previous cid/pid combined dimension reduction
         drug_column_names = self.__get_drug_column_names()
-        cid_features = [col for col in top_feature_cols if col in drug_column_names]
+        cid_features = [col for col in feature_cols if col in drug_column_names]
 
         df_drugs = df_features[['cid', 'pid', 'activity', 'activity_score']+cid_features]
         logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
@@ -254,7 +253,7 @@ class XGBoostClassifier():
 
         # pid set with subset of features derived from previous cid/pid combined dimension reduction
         protein_column_names = self.__get_protein_column_names()
-        pid_features = [col for col in top_feature_cols if col in protein_column_names]
+        pid_features = [col for col in feature_cols if col in protein_column_names]
         df_proteins = df_features[['cid', 'pid', 'activity', 'activity_score']+pid_features]
         logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
         logging.debug('pid features:')
@@ -272,10 +271,11 @@ class XGBoostClassifier():
         cid_only_predict_train_probs = drugs_model_results['training_probabilities'][:, 1]
         training_labels = df_features['activity'].values
 
-        self.training_weights = self.generate_training_weights(
-          pid_only_predict_train_probs, 
-          cid_only_predict_train_probs,
-          training_labels, max_loss=5.0)
+        if use_training_weights:
+          self.training_weights = self.generate_training_weights(
+            pid_only_predict_train_probs, 
+            cid_only_predict_train_probs,
+            training_labels, max_loss=5.0)
 
         # Combined model results
         logging.debug('cid/pid combined with activity score weighting, results:')
@@ -309,6 +309,7 @@ class XGBoostClassifier():
           proteins_model_results,
           roc_result)
 
+        '''
         self.__importance_to_csv(
           run_id,
           xgb_features,
@@ -318,6 +319,7 @@ class XGBoostClassifier():
           df_features,
           df_drugs,
           df_proteins)
+        '''
 
         del df_features
         del df_drugs
@@ -761,6 +763,8 @@ class XGBoostClassifier():
 
   # Get feature importance as information gain 
   # (the improvement in accuracy brought by a feature) from an XGBoost model.
+  # Then, return the features that do not contribute to see whether we can counter
+  # overfitting later on.
   def __get_features(self, model, df_features):
     gain_importance = model.get_booster().get_score(importance_type="gain")
     feature_indices = [int(key) for key in gain_importance.keys()]
@@ -768,8 +772,9 @@ class XGBoostClassifier():
     df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
     top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
 
-    return pd.DataFrame({'feature': top_feature_cols, 
-      'importance': list(gain_importance.values())}, columns = ['feature', 'importance'])
+    selected_features = list(set(df.columns.tolist()).difference(set(top_feature_cols)))
+
+    return selected_features
 
   # calculate the sample weights used for the F1 Score
   # TODO: Brian to write documentation for this:
@@ -923,7 +928,7 @@ class XGBoostClassifier():
     xgb = self.__get_xgb()
 
     sample_weight = None
-    if use_weights == True:
+    if use_weights:
       #sample_weight = df_in['activity_score']
       sample_weight = self.training_weights
 
