@@ -24,6 +24,9 @@ Inputs are:
   [-m] activity_threshold_stop - the value (+ activity_threshold_step) upon which the run
   terminates
 
+  [-z] feature_threshold - the proportion of highest gain features to exclude from modeling, e.g.
+  0.5 to exclude the top 50%
+
   [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
@@ -147,6 +150,7 @@ class XGBoostClassifier():
     max_activity_threshold, 
     activity_threshold_step,
     activity_threshold_stop,
+    feature_threshold,
     data_folder,
     use_dimension_reduction_weights,
     use_training_weights,
@@ -155,6 +159,7 @@ class XGBoostClassifier():
       self.max_activity_threshold = float(max_activity_threshold)
       self.activity_threshold_step = float(activity_threshold_step)
       self.activity_threshold_stop = float(activity_threshold_stop)
+      self.feature_threshold = float(feature_threshold)
       self.data_loc = data_folder
       self.job_name = job_name
 
@@ -768,6 +773,13 @@ class XGBoostClassifier():
   def __get_features(self, model, df_features):
     gain_importance = model.get_booster().get_score(importance_type="gain")
     feature_indices = [int(key) for key in gain_importance.keys()]
+    total_top = len(feature_indices)
+    
+    # exclude the top highest-gain feature_threshold% features
+    start_index = int(self.feature_threshold * total_top)
+    feature_indices = feature_indices[:start_index]
+
+    logging.debug('dropping top {:,} features out of {:,}'.format(start_index, total_top))
 
     df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
     top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
@@ -949,6 +961,7 @@ def main(argv):
   max_activity_threshold = None
   activity_threshold_step = None
   activity_threshold_stop = 0.0
+  feature_threshold = 0.0
   data_folder = 'data/'
   use_dimension_reduction_weights = 'True'
   use_training_weights = 'True'
@@ -957,18 +970,19 @@ def main(argv):
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:m:f:d:t:n:",["athresh=", "step=", "stop=", "data=", "dweights=", "tweights=", "name="])
+    opts, args = getopt.getopt(argv,"ha:s:m:z:f:d:t:n:",["athresh=", 
+      "step=", "stop=", "fthresh=", "data=", "dweights=", "tweights=", "name="])
   except getopt.GetoptError:
     print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop> \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
     print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
@@ -976,7 +990,7 @@ def main(argv):
     if opt == '-h':
       print('\n\n')
       logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
       print('\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
@@ -985,6 +999,8 @@ def main(argv):
       activity_threshold_step = arg
     elif opt in ("-m", "--stop"):
       activity_threshold_stop = arg
+    elif opt in ("-z", "--fthresh"):
+      feature_threshold = arg
     elif opt in ("-f", "--data"):
       data_folder = arg
     elif opt in ("-d", "--dweights"):
@@ -998,13 +1014,14 @@ def main(argv):
   if max_activity_threshold is None or activity_threshold_step is None:
     print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
     print('\n\n')
     sys.exit()
 
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
   logging.debug('activity_threshold_step is {}'.format(activity_threshold_step))
   logging.debug('activity_threshold_stop is {}'.format(activity_threshold_stop))
+  logging.debug('feature_threshold is {}'.format(activity_threshold_stop))
   logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
   logging.debug('use_training_weights is {}'.format(use_training_weights=='True'))
 
@@ -1012,6 +1029,7 @@ def main(argv):
     max_activity_threshold=max_activity_threshold,
     activity_threshold_step=activity_threshold_step,
     activity_threshold_stop=activity_threshold_stop,
+    feature_threshold=feature_threshold,
     data_folder=data_folder, 
     use_dimension_reduction_weights=use_dimension_reduction_weights=='True',
     use_training_weights=use_training_weights=='True',
