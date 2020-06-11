@@ -1021,7 +1021,7 @@ def main(argv):
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
   logging.debug('activity_threshold_step is {}'.format(activity_threshold_step))
   logging.debug('activity_threshold_stop is {}'.format(activity_threshold_stop))
-  logging.debug('feature_threshold is {}'.format(activity_threshold_stop))
+  logging.debug('feature_threshold is {}'.format(feature_threshold))
   logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
   logging.debug('use_training_weights is {}'.format(use_training_weights=='True'))
 
