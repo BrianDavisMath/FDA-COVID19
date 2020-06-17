@@ -603,6 +603,8 @@ class XGBoostClassifier():
 
   # Get the individual feature sets as data frames
   def __load_feature_files(self):
+    self.df_correlations = self.__load_data('data/overfitting_badness_v0.csv')
+
     logging.debug('===============================================')
     logging.debug('dragon_features.csv')
     logging.debug('===============================================')
@@ -768,11 +770,12 @@ class XGBoostClassifier():
 
   # Get feature importance as information gain 
   # (the improvement in accuracy brought by a feature) from an XGBoost model.
-  # Then, return the features that do not contribute to see whether we can counter
-  # overfitting later on.
   def __get_features(self, model, df_features):
     gain_importance = model.get_booster().get_score(importance_type="gain")
     feature_indices = [int(key) for key in gain_importance.keys()]
+    total_top = len(feature_indices)
+
+    '''
     total_top = len(feature_indices)
     
     # exclude the top highest-gain feature_threshold% features
@@ -785,6 +788,16 @@ class XGBoostClassifier():
     top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
 
     selected_features = list(set(df.columns.tolist()).difference(set(top_feature_cols)))
+    '''
+
+    features_to_drop = self.df_correlations[self.df_correlations['overfitting_badness_magnitude']>self.feature_threshold]
+
+    df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
+    top_feature_cols = list(df.columns.values[feature_indices]) # turn numbers back into column names
+    selected_features = list(set(top_feature_cols).difference(set(features_to_drop)))
+
+    logging.debug('dropping {:,} features.'.format(len(features_to_drop)))
+    logging.debug('using {:,} features out of {:,}'.format(len(selected_features), total_top))
 
     return selected_features
 
