@@ -775,12 +775,14 @@ class XGBoostClassifier():
     feature_indices = [int(key) for key in gain_importance.keys()]
     total_top = len(feature_indices)
 
-    features_to_drop = self.df_correlations[self.df_correlations['overfitting_badness_magnitude']>self.feature_threshold]
+    features_to_drop = list(self.df_correlations[self.df_correlations['overfitting_badness_magnitude']>self.feature_threshold]['feature'])
 
     df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
     top_feature_cols = list(df.columns.values[feature_indices]) # turn numbers back into column names
     selected_features = list(set(top_feature_cols).difference(set(features_to_drop)))
 
+    print('******************')
+    print(features_to_drop)
     logging.debug('dropping {:,} features.'.format(len(features_to_drop)))
     logging.debug('using {:,} features out of {:,}'.format(len(selected_features), total_top))
 
