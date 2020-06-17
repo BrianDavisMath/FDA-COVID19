@@ -775,21 +775,6 @@ class XGBoostClassifier():
     feature_indices = [int(key) for key in gain_importance.keys()]
     total_top = len(feature_indices)
 
-    '''
-    total_top = len(feature_indices)
-    
-    # exclude the top highest-gain feature_threshold% features
-    start_index = int(self.feature_threshold * total_top)
-    feature_indices = feature_indices[:start_index]
-
-    logging.debug('dropping top {:,} features out of {:,}'.format(start_index, total_top))
-
-    df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
-    top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
-
-    selected_features = list(set(df.columns.tolist()).difference(set(top_feature_cols)))
-    '''
-
     features_to_drop = self.df_correlations[self.df_correlations['overfitting_badness_magnitude']>self.feature_threshold]
 
     df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
