@@ -153,8 +153,6 @@ class XGBoostClassifier():
       activity_threshold = self.max_activity_threshold
       run_id = 0
       combined_results = []
-      drugs_results = []
-      proteins_results = []
       thresholds = []
 
       gc.collect()
@@ -225,15 +223,6 @@ class XGBoostClassifier():
         logging.debug('pid combined with activity score weighting, results:')
         proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=False)
 
-        # Training weights
-        pid_only_predict_train_probs = proteins_model_results['training_probabilities'][:, 1]
-        cid_only_predict_train_probs = drugs_model_results['training_probabilities'][:, 1]
-        training_labels = df_features['activity'].values
-
-        pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
-        cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
-        validation_labels = df_validation['activity'].values
-
         # Combined model results
         logging.debug('cid/pid combined with activity score weighting, results:')
         combined_model_results = self.__train_and_eval(df_features, df_validation)
@@ -242,8 +231,6 @@ class XGBoostClassifier():
         prediction_model_probs = combined_model_results['probabilities'][:, 1]
 
         combined_results.append(combined_model_results)
-        drugs_results.append(drugs_model_results)
-        proteins_results.append(proteins_model_results)
 
         self.__results_to_csv(
           activity_threshold,
@@ -278,9 +265,7 @@ class XGBoostClassifier():
       self.__params_and_metrics_to_csv(
         thresholds,
         use_dimension_reduction_weights,
-        combined_results,
-        drugs_results,
-        proteins_results)
+        combined_results)
 
 
 
@@ -356,9 +341,7 @@ class XGBoostClassifier():
     self,
     activity_thresholds,
     used_dimension_reduction_weights,
-    combined_results,
-    drugs_results,
-    proteins_results):
+    combined_results):
 
     results = []
 
