@@ -18,23 +18,17 @@ Inputs are:
   [-a] max_activity_threshold - used to sub-sample the training data for the
   first run
 
-  [-s] activity_threshold_step - the amount to reduce the activity threshold
+  [-s] activity_threshold_step - the amount to reduced the activity threshold
   on each run before sub-sampling the training data
 
   [-m] activity_threshold_stop - the value (+ activity_threshold_step) upon which the run
   terminates
-
-  [-z] feature_threshold - the proportion of highest gain features to exclude from modeling, e.g.
-  0.5 to exclude the top 50%
 
   [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
   [-d] use_dimension_reduction_weights - [True|False] whether to use activity_score 
   for sample_weight when training XGBoost for feature selection
-
-  [-t] use_training_weights - [True|False] whether to use activity_score 
-  for sample_weight when training XGBoost for activity classification
 
   [-n] name - job name used to place results in a directory of that name
 
@@ -45,8 +39,8 @@ Outputs:
   as well as probability of activity for each cid/pid pair in the
   validation set;
 
-  params_and_metrics.csv - the accuracy, precision, recall, weighted and unweighted
-  F1 score representing model performane along with the XGBoost parameters used
+  params_and_metrics.csv - the accuracy, precision, recall etc.
+  representing model performane along with the XGBoost parameters used
 
   feature_importances_[run_id].csv - the set of most important features, along with
   their information gain values, as returned by the first run of XGBoost for dimension
@@ -81,7 +75,7 @@ Data folder:
 
 Example call to run program:
 
-  python job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False -n 'test_0'
+  python job.py -a 0.02 -s 0.01 -f test_data/ -d False -n 'test_0'
 
   This will run two experiments where the activity threshold, used for sampling
   the training data, are 0.02 and 0.01. The corresponding run_ids will be 0 and 1.
@@ -101,46 +95,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 from xgboost import XGBClassifier
 
 logging.basicConfig(filename='job.log',level=logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.DEBUG)
 logging.getLogger().addHandler(ch)
-
-
-class WeightedROCAUC:
-  def __init__(self, pid_only_predict_probs, cid_only_predict_probs, validation_labels, classifier):
-    self.pid_probs = pid_only_predict_probs
-    self.cid_probs = cid_only_predict_probs
-    self.labels = validation_labels
-    self.classifier = classifier
-    pid_cid_probs = np.vstack([self.pid_probs, self.cid_probs]).transpose()
-    composite_model = LogisticRegression(random_state=0).fit(pid_cid_probs, self.labels)
-    self.composite_predictions = composite_model.predict_proba(pid_cid_probs)[:, 1]
-
-    self.composite_gain_ = np.vectorize(self.composite_gain_)
-  
-  def composite_gain_(self, prediction_loss, composite_loss):
-    if (prediction_loss == 0) and (composite_loss == 0):
-        return 0
-    else:
-        return 0.5 * (1 + (composite_loss - prediction_loss) / (composite_loss + prediction_loss))
-
-  def score(self, prediction_model_probs, max_loss=5.0):
-    prediction_loss = self.classifier.log_loss_(self.labels, prediction_model_probs)
-    prediction_loss = np.clip(prediction_loss, 0.0, max_loss)
-    composite_loss = self.classifier.log_loss_(self.labels, self.composite_predictions)
-    composite_loss = np.clip(composite_loss, 0.0, max_loss)
-
-    validation_weights = self.composite_gain_(prediction_loss, composite_loss)
-    return {
-      'roc_auc_score': roc_auc_score(self.labels, prediction_model_probs, sample_weight=validation_weights),
-      'composite_gain': validation_weights
-    }
 
 
 class XGBoostClassifier():
@@ -150,20 +111,15 @@ class XGBoostClassifier():
     max_activity_threshold, 
     activity_threshold_step,
     activity_threshold_stop,
-    feature_threshold,
     data_folder,
     use_dimension_reduction_weights,
-    use_training_weights,
     job_name):
 
       self.max_activity_threshold = float(max_activity_threshold)
       self.activity_threshold_step = float(activity_threshold_step)
       self.activity_threshold_stop = float(activity_threshold_stop)
-      self.feature_threshold = float(feature_threshold)
       self.data_loc = data_folder
       self.job_name = job_name
-
-      self.log_loss_ = np.vectorize(self.log_loss_)
 
       self.bad_dragon_cols = []
       self.non_feature_columns = ['activity', 'cid', 'pid', 'activity_score']
@@ -200,7 +156,6 @@ class XGBoostClassifier():
       drugs_results = []
       proteins_results = []
       thresholds = []
-      roc_results = []
 
       gc.collect()
 
@@ -222,7 +177,7 @@ class XGBoostClassifier():
           format(len(df_features), len(df_features.columns)))
 
 
-        # Select features using XGBoost
+        # Get important features using XGBoost
         Y = df_features['activity'].values
         X = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
 
@@ -232,24 +187,23 @@ class XGBoostClassifier():
         logging.debug('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
         X.columns = list(range(0, len(X.columns)))
 
-        self.set_pos_weight_param(df_features)
-
         # train
         sample_weight = None
-        if use_dimension_reduction_weights:
+        if use_dimension_reduction_weights == True:
           sample_weight = df_features['activity_score']
         xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
         # get features
-        feature_cols = self.__get_features(xgb, df_features)
-        logging.debug('selected features: {:,}'.format(len(feature_cols)))
-        df = df_features[['cid', 'pid', 'activity', 'activity_score']+feature_cols]
+        xgb_features = self.__get_features(xgb, df_features)
+        top_feature_cols = list(xgb_features['feature'].values)
+        logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
+        df = df_features[['cid', 'pid', 'activity', 'activity_score']+top_feature_cols]
         del df_features
         df_features = df
 
         # cid set with subset of features derived from previous cid/pid combined dimension reduction
         drug_column_names = self.__get_drug_column_names()
-        cid_features = [col for col in feature_cols if col in drug_column_names]
+        cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
         df_drugs = df_features[['cid', 'pid', 'activity', 'activity_score']+cid_features]
         logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
@@ -258,7 +212,7 @@ class XGBoostClassifier():
 
         # pid set with subset of features derived from previous cid/pid combined dimension reduction
         protein_column_names = self.__get_protein_column_names()
-        pid_features = [col for col in feature_cols if col in protein_column_names]
+        pid_features = [col for col in top_feature_cols if col in protein_column_names]
         df_proteins = df_features[['cid', 'pid', 'activity', 'activity_score']+pid_features]
         logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
         logging.debug('pid features:')
@@ -276,29 +230,16 @@ class XGBoostClassifier():
         cid_only_predict_train_probs = drugs_model_results['training_probabilities'][:, 1]
         training_labels = df_features['activity'].values
 
-        if use_training_weights:
-          self.training_weights = self.generate_training_weights(
-            pid_only_predict_train_probs, 
-            cid_only_predict_train_probs,
-            training_labels, max_loss=5.0)
+        pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
+        cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
+        validation_labels = df_validation['activity'].values
 
         # Combined model results
         logging.debug('cid/pid combined with activity score weighting, results:')
-        combined_model_results = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
+        combined_model_results = self.__train_and_eval(df_features, df_validation)
 
-        # Target metric
+        # Target metric (TODO: p@k/k)
         prediction_model_probs = combined_model_results['probabilities'][:, 1]
-        pid_only_predict_probs = proteins_model_results['probabilities'][:, 1]
-        cid_only_predict_probs = drugs_model_results['probabilities'][:, 1]
-        
-        # Validation labels must be in the correct order to match validation set probabilities.
-        validation_labels = combined_model_results['df_validation']['activity'].values
-        
-        self.weightedROCAUC = WeightedROCAUC(pid_only_predict_probs, 
-          cid_only_predict_probs, validation_labels, self)
-
-        roc_result = self.weightedROCAUC.score(prediction_model_probs, max_loss=5.0)
-        roc_results.append(roc_result)
 
         combined_results.append(combined_model_results)
         drugs_results.append(drugs_model_results)
@@ -308,13 +249,10 @@ class XGBoostClassifier():
           activity_threshold,
           run_id,
           use_dimension_reduction_weights,
-          use_training_weights,
           combined_model_results,
           drugs_model_results,
-          proteins_model_results,
-          roc_result)
+          proteins_model_results)
 
-        '''
         self.__importance_to_csv(
           run_id,
           xgb_features,
@@ -324,7 +262,6 @@ class XGBoostClassifier():
           df_features,
           df_drugs,
           df_proteins)
-        '''
 
         del df_features
         del df_drugs
@@ -341,35 +278,11 @@ class XGBoostClassifier():
       self.__params_and_metrics_to_csv(
         thresholds,
         use_dimension_reduction_weights,
-        use_training_weights,
         combined_results,
         drugs_results,
-        proteins_results,
-        roc_results)
+        proteins_results)
 
 
-  def log_loss_(self, true_label, predicted):
-    if true_label == 1:
-        return -np.log(predicted)
-    else:
-        return -np.log(1 - predicted)
-
-  def generate_training_weights(self, pid_only_predict_probs, cid_only_predict_prob, training_labels, max_loss=5.0):
-    # For use on training data
-    X_pid_cid = np.vstack([pid_only_predict_probs, cid_only_predict_prob]).transpose()
-    pid_cid_model = LogisticRegression(random_state=0).fit(X_pid_cid, training_labels)
-    pid_cid_predictions = pid_cid_model.predict_proba(X_pid_cid)[:, 1]
-    pid_cid_loss = self.log_loss_(training_labels, pid_cid_predictions)
-    return np.clip(pid_cid_loss, 0.0, max_loss)
-
-  def set_pos_weight_param(self, df):
-    num_active = len(df[df['activity']==1.0])
-    num_inactive = len(df) - num_active
-
-    if (num_inactive > num_active and num_active > 0):
-      self.scale_pos_weight = num_inactive/num_active
-    else:
-      self.scale_pos_weight = 1.0
 
   '''
   ==================================================================
@@ -443,11 +356,9 @@ class XGBoostClassifier():
     self,
     activity_thresholds,
     used_dimension_reduction_weights,
-    used_training_weights,
     combined_results,
     drugs_results,
-    proteins_results,
-    roc_results):
+    proteins_results):
 
     results = []
 
@@ -456,17 +367,11 @@ class XGBoostClassifier():
       result.append(i)
       result.append(activity_thresholds[i])
       result.append(used_dimension_reduction_weights)
-      result.append(used_training_weights)
-
-      result.append(roc_results[i]['roc_auc_score'])
 
       result.append(combined_results[i]['accuracy'])
       result.append(combined_results[i]['precision'])
       result.append(combined_results[i]['recall'])
-      result.append(combined_results[i]['f1_score_weighted'])
-      result.append(combined_results[i]['f1_score_unweighted'])
 
-      result.append(self.scale_pos_weight)
       result.append(self.learning_rate)
       result.append(self.n_estimators)
       result.append(self.objective)
@@ -482,14 +387,9 @@ class XGBoostClassifier():
       'run_id',
       'run_threshold',
       'used_dim_red_weights',
-      'used_training_weights',
-      'weighted_roc_auc',
       'accuracy',
       'precision',
       'recall',
-      'f1_score_weighted',
-      'f1_score_unweighted',
-      'xgb_scale_pos_weight',
       'xgb_learning_rate',
       'xgb_n_estimators',
       'xgb_objective',
@@ -511,15 +411,12 @@ class XGBoostClassifier():
     threshold,
     run_id,
     used_dimension_reduction_weights,
-    used_training_weights,
     combined_model_results,
     drugs_model_results,
-    proteins_model_results,
-    roc_results):
+    proteins_model_results):
 
     df_validation = combined_model_results['df_validation']
     df_validation.reset_index(inplace=True, drop=True)
-    validation_weights = combined_model_results['validation_weights']
 
     logging.debug('validation observations:')
     logging.debug(df_validation.head())
@@ -531,14 +428,10 @@ class XGBoostClassifier():
       result.append(run_id)
       result.append(threshold)
       result.append(used_dimension_reduction_weights)
-      result.append(used_training_weights)
       result.append(row['cid'])
       result.append(row['pid'])
       result.append(row['activity'])
       result.append(row['activity_score'])
-      result.append(validation_weights[index])
-
-      result.append(roc_results['composite_gain'][index])
 
       cid_only_probability = drugs_model_results['probabilities'][index][1]
       pid_only_probability = proteins_model_results['probabilities'][index][1]
@@ -554,13 +447,10 @@ class XGBoostClassifier():
       'run_id',
       'run_threshold',
       'used_dim_red_weights',
-      'used_training_weights',
       'cid',
       'pid',
       'activity',
       'activity_score',
-      'validation_weight',
-      'composite_gain',
       'cid_only_predict_proba',
       'pid_only_predict_proba',
       'combined_predict_proba'
@@ -603,8 +493,6 @@ class XGBoostClassifier():
 
   # Get the individual feature sets as data frames
   def __load_feature_files(self):
-    self.df_correlations = self.__load_data('data/overfitting_badness_v0.csv')
-
     logging.debug('===============================================')
     logging.debug('dragon_features.csv')
     logging.debug('===============================================')
@@ -773,36 +661,12 @@ class XGBoostClassifier():
   def __get_features(self, model, df_features):
     gain_importance = model.get_booster().get_score(importance_type="gain")
     feature_indices = [int(key) for key in gain_importance.keys()]
-    total_top = len(feature_indices)
-
-    features_to_drop = list(self.df_correlations[self.df_correlations['overfitting_badness_magnitude']>self.feature_threshold]['feature'])
 
     df = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
-    top_feature_cols = list(df.columns.values[feature_indices]) # turn numbers back into column names
-    selected_features = list(set(top_feature_cols).difference(set(features_to_drop)))
+    top_feature_cols = df.columns.values[feature_indices] # turn numbers back into column names
 
-    print('******************')
-    print(features_to_drop)
-    logging.debug('dropping {:,} features.'.format(len(features_to_drop)))
-    logging.debug('using {:,} features out of {:,}'.format(len(selected_features), total_top))
-
-    return selected_features
-
-  # calculate the sample weights used for the F1 Score
-  # TODO: Brian to write documentation for this:
-  def __get_validation_weights(self, training_features_active, training_features_inactive,
-                             validation_features_active, validation_features_inactive):
-    active_nbrs = NearestNeighbors(n_neighbors=1).fit(training_features_active)
-    inactive_nbrs = NearestNeighbors(n_neighbors=1).fit(training_features_inactive)
-    act_act_distances, _ = active_nbrs.kneighbors(validation_features_active)
-    inact_act_distances, _ = active_nbrs.kneighbors(validation_features_inactive)
-    act_inact_distances, _ = inactive_nbrs.kneighbors(validation_features_active)
-    inact_inact_distances, _ = inactive_nbrs.kneighbors(validation_features_inactive)
-    active_scores = act_act_distances / act_inact_distances
-    active_weights = (1 + np.argsort(np.argsort(active_scores.flatten()))) / len(active_scores)
-    inactive_scores = inact_inact_distances / inact_act_distances
-    inactive_weights = (1 + np.argsort(np.argsort(inactive_scores.flatten()))) / len(inactive_scores)
-    return active_weights, inactive_weights
+    return pd.DataFrame({'feature': top_feature_cols, 
+      'importance': list(gain_importance.values())}, columns = ['feature', 'importance'])
 
   # get only the feature names from a csv file
   def __get_csv_feature_names(self, file):
@@ -817,31 +681,8 @@ class XGBoostClassifier():
 
     logging.debug('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
 
-    # weighted F1 score
-    training_features_active = df_in[df_in['activity']==1]
-    training_features_inactive = df_in[df_in['activity']==0]
-    
-    training_features_active = \
-      training_features_active.loc[:, ~training_features_active.columns.isin(self.non_feature_columns)]
-    training_features_inactive = \
-      training_features_inactive.loc[:, ~training_features_inactive.columns.isin(self.non_feature_columns)]
-
-    validation_features_active = df_validation[df_validation['activity']==1]
-    validation_features_inactive = df_validation[df_validation['activity']==0]
-
-    # Needed later for reporting
-    df_validation_features = validation_features_active.append(validation_features_inactive)
-
-    y_test = df_validation_features['activity'].values
-
-    # remove the non-feature columns
-    validation_features_active = \
-      validation_features_active.loc[:, ~validation_features_active.columns.isin(self.non_feature_columns)]
-
-    validation_features_inactive = \
-      validation_features_inactive.loc[:, ~validation_features_inactive.columns.isin(self.non_feature_columns)]
-    
-    X_test = validation_features_active.append(validation_features_inactive)
+    y_test = df_validation['activity'].values
+    X_test = df_validation.loc[:, ~df_validation.columns.isin(self.non_feature_columns)]
 
     # accuracy, precision and recall
     X_test.columns = list(range(0, len(X_test.columns)))
@@ -859,35 +700,15 @@ class XGBoostClassifier():
     logging.debug("Precision = {:0.2f}%".format(precision))
     logging.debug("Recall = {:0.2f}%".format(recall))
 
-    active_weights, inactive_weights = self.__get_validation_weights(
-        training_features_active, 
-        training_features_inactive,
-        validation_features_active, 
-        validation_features_inactive)
-
-    assert(len(inactive_weights) + len(active_weights) == len(df_validation))
-
-    weights = list(active_weights) + list(inactive_weights)
-
-    f1score = f1_score(y_test, y_pred, average='binary', sample_weight=weights)
-
-    logging.debug('F1 Score (weighted): {:0.2f}%'.format(f1score*100))
-    
-    f1score_unweighted = f1_score(y_test, y_pred, average='binary')
-    logging.debug('F1 Score (unweighted): {:0.2f}%'.format(f1score_unweighted*100))
-    
     probabilities = model.predict_proba(X_test)
 
     return {
       'model': model,
       'probabilities': probabilities, 
-      'validation_weights': weights,
-      'df_validation': df_validation_features,
+      'df_validation': df_validation,
       'accuracy': accuracy,
       'precision': precision,
-      'recall': recall,
-      'f1_score_weighted': f1score,
-      'f1_score_unweighted': f1score_unweighted}
+      'recall': recall}
       
       
   # load drug data column names
@@ -919,8 +740,7 @@ class XGBoostClassifier():
     return pid_features
 
   def __get_xgb(self):
-    xgb = XGBClassifier(scale_pos_weight=self.scale_pos_weight,
-                        learning_rate=self.learning_rate, 
+    xgb = XGBClassifier(learning_rate=self.learning_rate, 
                         n_estimators=self.n_estimators, 
                         objective=self.objective,
                         subsample=self.subsample,
@@ -939,12 +759,7 @@ class XGBoostClassifier():
 
     xgb = self.__get_xgb()
 
-    sample_weight = None
-    if use_weights:
-      #sample_weight = df_in['activity_score']
-      sample_weight = self.training_weights
-
-    model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
+    model = self.__train(X, Y, xgb=xgb)
     training_probabilities = model.predict_proba(X)
     del X
     del Y
@@ -961,28 +776,25 @@ def main(argv):
   max_activity_threshold = None
   activity_threshold_step = None
   activity_threshold_stop = 0.0
-  feature_threshold = 0.0
   data_folder = 'data/'
   use_dimension_reduction_weights = 'True'
-  use_training_weights = 'True'
   job_name = ''
 
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:m:z:f:d:t:n:",["athresh=", 
-      "step=", "stop=", "fthresh=", "data=", "dweights=", "tweights=", "name="])
+    opts, args = getopt.getopt(argv,"ha:s:m:f:d:t:n:",["athresh=", "step=", "stop=", "data=", "dweights=", "tweights=", "name="])
   except getopt.GetoptError:
     print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop> \
--z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
     print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
@@ -990,7 +802,7 @@ def main(argv):
     if opt == '-h':
       print('\n\n')
       logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
       print('\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
@@ -999,14 +811,10 @@ def main(argv):
       activity_threshold_step = arg
     elif opt in ("-m", "--stop"):
       activity_threshold_stop = arg
-    elif opt in ("-z", "--fthresh"):
-      feature_threshold = arg
     elif opt in ("-f", "--data"):
       data_folder = arg
     elif opt in ("-d", "--dweights"):
       use_dimension_reduction_weights = arg
-    elif opt in ("-t", "--tweights"):
-      use_training_weights = arg
     elif opt in ("-n", "--name"):
       job_name = arg
 
@@ -1014,31 +822,26 @@ def main(argv):
   if max_activity_threshold is None or activity_threshold_step is None:
     print('\n\n')
     logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--z <feature_threshold> -f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit()
 
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
   logging.debug('activity_threshold_step is {}'.format(activity_threshold_step))
   logging.debug('activity_threshold_stop is {}'.format(activity_threshold_stop))
-  logging.debug('feature_threshold is {}'.format(feature_threshold))
   logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
-  logging.debug('use_training_weights is {}'.format(use_training_weights=='True'))
 
   xgb = XGBoostClassifier(
     max_activity_threshold=max_activity_threshold,
     activity_threshold_step=activity_threshold_step,
     activity_threshold_stop=activity_threshold_stop,
-    feature_threshold=feature_threshold,
     data_folder=data_folder, 
     use_dimension_reduction_weights=use_dimension_reduction_weights=='True',
-    use_training_weights=use_training_weights=='True',
     job_name=job_name)
 
 
 if __name__== "__main__":
   main(sys.argv[1:])
-
 
 
 
