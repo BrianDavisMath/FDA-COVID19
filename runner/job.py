@@ -225,6 +225,7 @@ class XGBoostClassifier():
       prediction_model_probs = combined_model_results['probabilities'][:, 1]
 
       self.__results_to_csv(
+        k,
         use_dimension_reduction_weights,
         combined_model_results,
         drugs_model_results,
@@ -249,6 +250,7 @@ class XGBoostClassifier():
       gc.collect()
 
       self.__params_and_metrics_to_csv(
+        k,
         use_dimension_reduction_weights,
         combined_model_results)
 
@@ -321,10 +323,12 @@ class XGBoostClassifier():
   # Write parameters and metrics to CSV for each run
   def __params_and_metrics_to_csv(
     self,
+    k,
     used_dimension_reduction_weights,
     combined_results):
 
     result = []
+    result.append(k)
     result.append(used_dimension_reduction_weights)
 
     result.append(combined_results['accuracy'])
@@ -341,6 +345,7 @@ class XGBoostClassifier():
     result.append(self.colsample_bytree)
 
     df = pd.DataFrame([result], columns=[
+      'k',
       'used_dim_red_weights',
       'accuracy',
       'precision',
@@ -363,6 +368,7 @@ class XGBoostClassifier():
   # Write modeling results to CSV
   def __results_to_csv(
     self, 
+    k,
     used_dimension_reduction_weights,
     combined_model_results,
     drugs_model_results,
@@ -413,7 +419,7 @@ class XGBoostClassifier():
     else:
       logging.debug ("Successfully created the directory %s " % path)
 
-    file_path = 'results/'+self.job_name+'/results.csv'
+    file_path = 'results/'+self.job_name+'/results_k{}.csv'.format(k)
     df.to_csv(file_path, index=False)
     del df
 
