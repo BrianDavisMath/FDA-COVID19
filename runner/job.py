@@ -116,7 +116,6 @@ class XGBoostClassifier():
       self.job_name = job_name
 
       self.bad_dragon_cols = []
-      self.non_feature_columns = ['activity', 'cid', 'pid', 'activity_score']
 
       # XGBoost parameters
       self.learning_rate=0.02
@@ -145,9 +144,16 @@ class XGBoostClassifier():
 
       combined_results = []
 
+      if 'activity_score' in self.training_features:
+        self.non_feature_columns = ['cid', 'pid', 'activity', 'activity_score']
+      else:
+        self.non_feature_columns = ['cid', 'pid', 'activity']
+
       gc.collect()
 
-      if self.max_activity_threshold is not None and self.min_activity_threshold is not None:
+      if self.max_activity_threshold is not None and \
+        self.min_activity_threshold is not None and \
+        'activity_score' in self.training_features:
         df_features = self.training_features[ \
           (self.training_features['activity_score'] >= self.min_activity_threshold) & \
           (self.training_features['activity_score'] <= self.max_activity_threshold)]
@@ -181,15 +187,16 @@ class XGBoostClassifier():
 
       # train
       sample_weight = None
-      if use_dimension_reduction_weights == True:
+      if use_dimension_reduction_weights == True and 'activity_score' in df_features:
         sample_weight = df_features['activity_score']
+
       xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
       # get features
       xgb_features = self.__get_features(xgb, df_features)
       top_feature_cols = list(xgb_features['feature'].values)
       logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
-      df = df_features[['cid', 'pid', 'activity', 'activity_score']+top_feature_cols]
+      df = df_features[self.non_feature_columns+top_feature_cols]
       del df_features
       df_features = df
 
@@ -197,7 +204,7 @@ class XGBoostClassifier():
       drug_column_names = self.__get_drug_column_names()
       cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
-      df_drugs = df_features[['cid', 'pid', 'activity', 'activity_score']+cid_features]
+      df_drugs = df_features[self.non_feature_columns+cid_features]
       logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
       logging.debug('cid features:')
       logging.debug(df_drugs.head())
@@ -205,7 +212,7 @@ class XGBoostClassifier():
       # pid set with subset of features derived from previous cid/pid combined dimension reduction
       protein_column_names = self.__get_protein_column_names()
       pid_features = [col for col in top_feature_cols if col in protein_column_names]
-      df_proteins = df_features[['cid', 'pid', 'activity', 'activity_score']+pid_features]
+      df_proteins = df_features[self.non_feature_columns+pid_features]
       logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
       logging.debug('pid features:')
       logging.debug(df_proteins.head())
@@ -381,6 +388,30 @@ class XGBoostClassifier():
     logging.debug(df_validation.head())
 
     results = []
+    has_activity_score = 'activity_score' in df_validation
+
+    columns = []
+    if has_activity_score:
+      columns=[
+        'used_dim_red_weights',
+        'cid',
+        'pid',
+        'activity',
+        'activity_score',
+        'cid_only_predict_proba',
+        'pid_only_predict_proba',
+        'combined_predict_proba'
+      ]
+    else:
+      columns=[
+        'used_dim_red_weights',
+        'cid',
+        'pid',
+        'activity',
+        'cid_only_predict_proba',
+        'pid_only_predict_proba',
+        'combined_predict_proba'
+      ]
 
     for index, row in df_validation.iterrows():
       result = []
@@ -388,7 +419,9 @@ class XGBoostClassifier():
       result.append(row['cid'])
       result.append(row['pid'])
       result.append(row['activity'])
-      result.append(row['activity_score'])
+
+      if has_activity_score:
+        result.append(row['activity_score'])
 
       cid_only_probability = drugs_model_results['probabilities'][index][1]
       pid_only_probability = proteins_model_results['probabilities'][index][1]
@@ -400,16 +433,7 @@ class XGBoostClassifier():
 
       results.append(result)
 
-    df = pd.DataFrame(results, columns=[
-      'used_dim_red_weights',
-      'cid',
-      'pid',
-      'activity',
-      'activity_score',
-      'cid_only_predict_proba',
-      'pid_only_predict_proba',
-      'combined_predict_proba'
-      ])
+    df = pd.DataFrame(results, columns=columns)
 
     path = 'results/'+self.job_name
     try:
