@@ -440,7 +440,7 @@ class XGBoostClassifier():
     else:
       logging.debug ("Successfully created the directory %s " % path)
 
-    file_path = 'results/'+self.job_name+'/results_k{}.csv'.format(k)
+    file_path = 'results/'+self.job_name+'/probabilities_k{}.csv'.format(k)
     df.to_csv(file_path, index=False)
     del df
 
@@ -663,6 +663,7 @@ class XGBoostClassifier():
       df_validation = df_validation[df_in.columns.tolist()]
 
     logging.debug('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
+    logging.debug('removed non-feature cols from df_validation: {}'.format(non_Feature_cols))
 
     y_test = df_validation['activity'].values
     X_test = df_validation.loc[:, ~df_validation.columns.isin(non_Feature_cols)]
