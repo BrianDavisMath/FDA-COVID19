@@ -20,8 +20,6 @@ Inputs are:
   [-s] min_activity_threshold - used for sampling the data. Specifies the lower bound of
   the sample activity score.
 
-  [-k] value for p@k - the k value for precision@k
-
   [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
@@ -71,7 +69,7 @@ Data folder:
 
 Example call to run program:
 
-  python job.py -k 5 -f test_data/ -d False -n 'test_0'
+  python job.py -f test_data/ -d False -n 'test_0'
 
 
 '''
@@ -102,14 +100,12 @@ class XGBoostClassifier():
     
   def __init__(
     self, 
-    k,
     max_activity_threshold, 
     min_activity_threshold,
     data_folder,
     use_dimension_reduction_weights,
     job_name):
 
-      self.k = k
       self.max_activity_threshold = max_activity_threshold
       self.min_activity_threshold = min_activity_threshold
       self.data_loc = data_folder
@@ -160,7 +156,7 @@ class XGBoostClassifier():
       else:
         df_features = self.training_features
 
-      logging.debug('k={}, features shape: {}'.format(self.k, df_features.shape))
+      logging.debug('features shape: {}'.format(df_features.shape))
 
       # drop zero-variance columns
       var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
@@ -228,15 +224,14 @@ class XGBoostClassifier():
       logging.debug('cid/pid combined with activity score weighting, results:')
       combined_model_results = self.__train_and_eval(df_features, df_validation)
 
-      # Target metric (TODO: p@k/k)
-      prediction_model_probs = combined_model_results['probabilities'][:, 1]
-
-      self.__results_to_csv(
-        k,
+      self.__probs_to_csv(
         use_dimension_reduction_weights,
         combined_model_results,
         drugs_model_results,
         proteins_model_results)
+
+      # Target metric
+      self.__target_metric(combined_model_results)
 
       self.__importance_to_csv(
         xgb_features,
@@ -257,10 +252,41 @@ class XGBoostClassifier():
       gc.collect()
 
       self.__params_and_metrics_to_csv(
-        k,
         use_dimension_reduction_weights,
         combined_model_results)
 
+  def __target_metric(self, combined_model_results):
+    prediction_model_probs = combined_model_results['probabilities'][:, 1]
+    df_validation = combined_model_results['df_validation'].copy()
+    df_validation['probabilities'] = prediction_model_probs
+    df_validation.sort_values(by='probabilities', ascending=False, inplace=True)
+
+    start_k = 100
+    end_k = len(df_validation)
+    k_inc = 100
+    start_pwr = 1
+    end_pwr = 5
+
+    results = []
+
+    for p in range(start_pwr, end_pwr+1):
+      for k in range(start_k, end_k, k_inc):
+        v = df_validation[:k][(df_validation['activity'] == 1.0)]
+        sum_of_weights_p = sum([vp**p for vp in v['latent_prob_delta_ratio']])
+        p_at_k = v['activity'].sum()/k
+        weighted_p_at_k = sum_of_weights_p/k
+        result = [p, k, sum_of_weights_p, p_at_k, weighted_p_at_k]
+        results.append(result)
+
+    self.__target_metric_to_csv(results)
+    del df_validation
+
+  def __target_metric_to_csv(self, results):
+    columns = ['p', 'k', 'sum_of_weights^p', 'p@k', 'weighted_p@k']
+    df = pd.DataFrame(results, columns=columns)
+    path = 'results/'+self.job_name+'/target_metric.csv'
+    df.to_csv(path, index=False)
+    del df
 
 
   '''
@@ -330,18 +356,14 @@ class XGBoostClassifier():
   # Write parameters and metrics to CSV for each run
   def __params_and_metrics_to_csv(
     self,
-    k,
     used_dimension_reduction_weights,
     combined_results):
 
     result = []
-    result.append(k)
     result.append(used_dimension_reduction_weights)
-
     result.append(combined_results['accuracy'])
     result.append(combined_results['precision'])
     result.append(combined_results['recall'])
-
     result.append(self.learning_rate)
     result.append(self.n_estimators)
     result.append(self.objective)
@@ -351,8 +373,7 @@ class XGBoostClassifier():
     result.append(self.gamma)
     result.append(self.colsample_bytree)
 
-    df = pd.DataFrame([result], columns=[
-      'k',
+    columns=[
       'used_dim_red_weights',
       'accuracy',
       'precision',
@@ -365,17 +386,20 @@ class XGBoostClassifier():
       'xgb_max_depth',
       'xgb_gamma',
       'xgb_colsample_bytree'
-      ])
+    ]
+
+    tuples = list(zip(columns, result)) 
+
+    df = pd.DataFrame(tuples, columns=['name', 'value'])
 
     path = 'results/'+self.job_name+'/params_and_metrics.csv'
     df.to_csv(path, index=False)
     del df
 
 
-  # Write modeling results to CSV
-  def __results_to_csv(
+  # Write modeling probabilities to CSV
+  def __probs_to_csv(
     self, 
-    k,
     used_dimension_reduction_weights,
     combined_model_results,
     drugs_model_results,
@@ -440,7 +464,7 @@ class XGBoostClassifier():
     else:
       logging.debug ("Successfully created the directory %s " % path)
 
-    file_path = 'results/'+self.job_name+'/probabilities_k{}.csv'.format(k)
+    file_path = 'results/'+self.job_name+'/probabilities.csv'
     df.to_csv(file_path, index=False)
     del df
 
@@ -767,17 +791,17 @@ def main(argv):
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"hk:a:s:f:d:t:n:",["k=", "athresh=", "sthresh=", "data=", "dweights=", "name="])
+    opts, args = getopt.getopt(argv,"ha:s:f:d:t:n:",["athresh=", "sthresh=", "data=", "dweights=", "name="])
   except getopt.GetoptError:
     print('\n\n')
-    logging.debug('job.py -k <precision@k> -a <max_activity_threshold> -s <min_activity_threshold> \
+    logging.debug('job.py -a <max_activity_threshold> -s <min_activity_threshold> \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
     print('\n\n')
-    logging.debug('job.py -k <precision@k> -a <max_activity_threshold> -s <min_activity_threshold>  \
+    logging.debug('job.py -a <max_activity_threshold> -s <min_activity_threshold>  \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit(2)
@@ -785,12 +809,10 @@ def main(argv):
   for opt, arg in opts:
     if opt == '-h':
       print('\n\n')
-      logging.debug('job.py -k <precision@k> -a <max_activity_threshold> -s <min_activity_threshold>  \
+      logging.debug('job.py -a <max_activity_threshold> -s <min_activity_threshold>  \
 -f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
       print('\n\n')
       sys.exit()
-    elif opt in ("-k", "--k"):
-      k = arg
     elif opt in ("-a", "--athresh"):
       max_activity_threshold = arg
     elif opt in ("-s", "--sthresh"):
@@ -802,13 +824,11 @@ def main(argv):
     elif opt in ("-n", "--name"):
       job_name = arg
 
-  logging.debug('using precision@{}'.format(k))
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
   logging.debug('min_activity_threshold is {}'.format(min_activity_threshold))
   logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
 
   xgb = XGBoostClassifier(
-    k,
     max_activity_threshold=max_activity_threshold,
     min_activity_threshold=min_activity_threshold,
     data_folder=data_folder, 
