@@ -1,4 +1,4 @@
-,cid,pid,activity,activity_score
+,cid,pid,activity,latent_prob_delta_ratio
 106739,2264,P01106,1,0.134146341
 98502,49803313,P30530,1,0.205914567
 59873,2170,CAA56931,0,0.36910828

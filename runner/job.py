@@ -389,29 +389,23 @@ class XGBoostClassifier():
 
     results = []
     has_activity_score = 'activity_score' in df_validation
+    has_latent_prob_delta_ratio = 'latent_prob_delta_ratio' in df_validation
 
-    columns = []
+    columns=[
+      'used_dim_red_weights',
+      'cid',
+      'pid',
+      'activity',
+      'cid_only_predict_proba',
+      'pid_only_predict_proba',
+      'combined_predict_proba'
+    ]
+
     if has_activity_score:
-      columns=[
-        'used_dim_red_weights',
-        'cid',
-        'pid',
-        'activity',
-        'activity_score',
-        'cid_only_predict_proba',
-        'pid_only_predict_proba',
-        'combined_predict_proba'
-      ]
-    else:
-      columns=[
-        'used_dim_red_weights',
-        'cid',
-        'pid',
-        'activity',
-        'cid_only_predict_proba',
-        'pid_only_predict_proba',
-        'combined_predict_proba'
-      ]
+      columns.append('activity_score')
+
+    if has_latent_prob_delta_ratio:
+      columns.append('latent_prob_delta_ratio')
 
     for index, row in df_validation.iterrows():
       result = []
@@ -420,9 +414,6 @@ class XGBoostClassifier():
       result.append(row['pid'])
       result.append(row['activity'])
 
-      if has_activity_score:
-        result.append(row['activity_score'])
-
       cid_only_probability = drugs_model_results['probabilities'][index][1]
       pid_only_probability = proteins_model_results['probabilities'][index][1]
       combined_probability = combined_model_results['probabilities'][index][1]
@@ -430,6 +421,12 @@ class XGBoostClassifier():
       result.append(cid_only_probability)
       result.append(pid_only_probability)
       result.append(combined_probability)
+
+      if has_activity_score:
+        result.append(row['activity_score'])
+
+      if has_latent_prob_delta_ratio:
+        result.append(row['latent_prob_delta_ratio'])
 
       results.append(result)
 
@@ -656,12 +653,19 @@ class XGBoostClassifier():
   # load test data and gather metrics
   def __gather_metrics(self, df_in, model, df_validation):
     # Take only the reduced set of columns.
-    df_validation = df_validation[df_in.columns.tolist()]
+    non_Feature_cols = self.non_feature_columns.copy()
+    if 'latent_prob_delta_ratio' in df_validation:
+      non_Feature_cols.append('latent_prob_delta_ratio')
+      cols = df_in.columns.tolist()
+      cols.append('latent_prob_delta_ratio')
+      df_validation = df_validation[cols]
+    else:
+      df_validation = df_validation[df_in.columns.tolist()]
 
     logging.debug('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
 
     y_test = df_validation['activity'].values
-    X_test = df_validation.loc[:, ~df_validation.columns.isin(self.non_feature_columns)]
+    X_test = df_validation.loc[:, ~df_validation.columns.isin(non_Feature_cols)]
 
     # accuracy, precision and recall
     X_test.columns = list(range(0, len(X_test.columns)))
