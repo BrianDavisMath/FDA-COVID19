@@ -261,9 +261,9 @@ class XGBoostClassifier():
     df_validation['probabilities'] = prediction_model_probs
     df_validation.sort_values(by='probabilities', ascending=False, inplace=True)
 
-    start_k = 100
+    start_k = 1
     end_k = len(df_validation)
-    k_inc = 100
+    k_inc = 10
     start_pwr = 1
     end_pwr = 26
     pwr_inc = 5
@@ -271,11 +271,13 @@ class XGBoostClassifier():
     results = []
 
     for p in range(start_pwr, end_pwr, pwr_inc):
+      weights = [v**p for v in df_validation['latent_prob_delta_ratio']]
+      df_validation['p'] = weights
       for k in range(start_k, end_k, k_inc):
         v = df_validation[:k][(df_validation['activity'] == 1.0)]
-        sum_of_weights_p = sum([vp**p for vp in v['latent_prob_delta_ratio']])
+        sum_of_weights_p = v['latent_prob_delta_ratio'].sum()
         p_at_k = v['activity'].sum()/k
-        weighted_p_at_k = sum_of_weights_p/df_validation[:k]['latent_prob_delta_ratio'].sum()
+        weighted_p_at_k = sum_of_weights_p/df_validation[:k]['p'].sum()
         result = [p, k, sum_of_weights_p, p_at_k, weighted_p_at_k]
         results.append(result)
 
