@@ -219,10 +219,10 @@ class XGBoostClassifier():
 
       # Run models
       logging.debug('cid with activity score weighting, results:')
-      drugs_model_results = self.__train_and_eval(df_drugs, df_validation, use_weights=False)
+      drugs_model_results = self.__train_and_eval(df_drugs, df_validation)
 
       logging.debug('pid combined with activity score weighting, results:')
-      proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=False)
+      proteins_model_results = self.__train_and_eval(df_proteins, df_validation)
 
       # Combined model results
       logging.debug('cid/pid combined with activity score weighting, results:')
@@ -729,8 +729,8 @@ class XGBoostClassifier():
                         colsample_bytree=self.colsample_bytree)
     return xgb
 
-  # Model for combined cid/pid features using activity scores as sample weights.
-  def __train_and_eval(self, df_in, df_validation, use_weights=True):
+
+  def __train_and_eval(self, df_in, df_validation):
     Y = df_in['activity'].values
     
     X = df_in.loc[:, ~df_in.columns.isin(self.non_feature_columns)]
