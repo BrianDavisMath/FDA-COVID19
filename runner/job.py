@@ -264,13 +264,10 @@ class XGBoostClassifier():
     start_k = 1
     end_k = len(df_validation)
     k_inc = 10
-    start_pwr = 1
-    end_pwr = 26
-    pwr_inc = 5
 
     results = []
 
-    for p in range(start_pwr, end_pwr, pwr_inc):
+    for p in [25, 50, 100, 250, 500]:
       weights = [v**p for v in df_validation['latent_prob_delta_ratio']]
       df_validation['p'] = weights
       for k in range(start_k, end_k, k_inc):
