@@ -1,0 +1,20 @@
+# this is an official Python runtime, used as the parent image
+FROM python:3.6.7
+
+RUN mkdir /usr/src/app
+WORKDIR /usr/src/app
+
+RUN pip install --upgrade pip
+
+COPY requirements.txt .
+
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
+# Create a config file and disable the security token.
+RUN mkdir ~/.jupyter
+RUN touch ~/.jupyter/jupyter_notebook_config.py
+RUN echo "c.NotebookApp.token = ''" > ~/.jupyter/jupyter_notebook_config.py
+
+# Expose the port Jupyter notebooks will listen on
+EXPOSE 8888
+

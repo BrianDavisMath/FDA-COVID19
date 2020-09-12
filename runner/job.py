@@ -9,49 +9,40 @@ drug-receptor interactios.
 The routine trains the model twice: the first time extracts the most 
 important features; the second run trains the model for the lassification.
 
-The dimension reduction and modeling stage are repeated multiple times.
-Each run is for a different subset of the training data that is determined
-by an activity threshold. [Brian to document how that is calculated]
+If a min_activity_threshold and max_activity_threshold are specified then the data
+are filtered for sample activity score in that range.
 
 Inputs are:
   
-  [-a] max_activity_threshold - used to sub-sample the training data for the
-  first run
+  [-a] max_activity_threshold - used for sampling the data. Specifies the upper bound of
+  the sample activity score.
 
-  [-s] activity_threshold_step - the amount to reduced the activity threshold
-  on each run before sub-sampling the training data
-
-  [-m] activity_threshold_stop - the value (+ activity_threshold_step) upon which the run
-  terminates
+  [-s] min_activity_threshold - used for sampling the data. Specifies the lower bound of
+  the sample activity score.
 
   [-f] data_folder - defaults to "/data". Specifies the location of the data from which the
   features will be selected.
 
-  [-d] use_dimension_reduction_weights - [True|False] whether to use sample_activity_score 
+  [-d] use_dimension_reduction_weights - [True|False] whether to use activity_score 
   for sample_weight when training XGBoost for feature selection
-
-  [-t] use_training_weights - [True|False] whether to use sample_activity_score 
-  for sample_weight when training XGBoost for activity classification
 
   [-n] name - job name used to place results in a directory of that name
 
 
 Outputs:
 
-  results_[run_id].csv - model outputs including binary classification for activity 
+  results.csv - model outputs including binary classification for activity 
   as well as probability of activity for each cid/pid pair in the
   validation set;
 
-  params_and_metrics.csv - the accuracy, precision, recall, weighted and unweighted
-  F1 score representing model performane along with the XGBoost parameters used
+  params_and_metrics.csv - the accuracy, precision, recall etc.
+  representing model performane along with the XGBoost parameters used
 
-  feature_importances_[run_id].csv - the set of most important features, along with
+  feature_importances.csv - the set of most important features, along with
   their information gain values, as returned by the first run of XGBoost for dimension
   reduction as well as for each classification (cid-only, pid-only and combined).
 
   Note: all results files are written to a dynamically created **results folder**.
-  Also, **run_id** is a zero-based index of each run and corresponds to each unique
-  activity_threshold used in sampling the training data
 
 
 Data folder:
@@ -78,10 +69,8 @@ Data folder:
 
 Example call to run program:
 
-  python job.py -a 0.02 -s 0.01 -f test_data/ -d False -t False -n 'test_0'
+  python job.py -f test_data/ -d False -n 'test_0'
 
-  This will run two experiments where the activity threshold, used for sampling
-  the training data, are 0.02 and 0.01. The corresponding run_ids will be 0 and 1.
 
 '''
 import logging
@@ -98,8 +87,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
-
+from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 
 logging.basicConfig(filename='job.log',level=logging.DEBUG)
@@ -107,26 +95,23 @@ ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.DEBUG)
 logging.getLogger().addHandler(ch)
 
+
 class XGBoostClassifier():
     
   def __init__(
     self, 
     max_activity_threshold, 
-    activity_threshold_step,
-    activity_threshold_stop,
+    min_activity_threshold,
     data_folder,
     use_dimension_reduction_weights,
-    use_training_weights,
     job_name):
 
-      self.max_activity_threshold = float(max_activity_threshold)
-      self.activity_threshold_step = float(activity_threshold_step)
-      self.activity_threshold_stop = float(activity_threshold_stop)
+      self.max_activity_threshold = max_activity_threshold
+      self.min_activity_threshold = min_activity_threshold
       self.data_loc = data_folder
       self.job_name = job_name
 
       self.bad_dragon_cols = []
-      self.non_feature_columns = ['index', 'activity', 'cid', 'pid', 'expanding_mean', 'sample_activity_score']
 
       # XGBoost parameters
       self.learning_rate=0.02
@@ -153,127 +138,155 @@ class XGBoostClassifier():
       logging.debug(df_validation.head())
       logging.debug('df_validation - rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
 
-      # Iterate over activity thresholds and produce results for each one
-      activity_threshold = self.max_activity_threshold
-      run_id = 0
       combined_results = []
-      drugs_results = []
-      proteins_results = []
-      thresholds = []
+
+      if 'activity_score' in self.training_features:
+        self.non_feature_columns = ['cid', 'pid', 'activity', 'activity_score']
+      else:
+        self.non_feature_columns = ['cid', 'pid', 'activity']
 
       gc.collect()
 
-      while activity_threshold > self.activity_threshold_stop:
-        df_features = self.training_features[self.training_features['sample_activity_score'] > activity_threshold]
-        logging.debug('sample_activity_score ({}) features shape: {}'
-          .format(activity_threshold, df_features.shape))
+      if self.max_activity_threshold is not None and \
+        self.min_activity_threshold is not None and \
+        'activity_score' in self.training_features:
+        df_features = self.training_features[ \
+          (self.training_features['activity_score'] >= self.min_activity_threshold) & \
+          (self.training_features['activity_score'] <= self.max_activity_threshold)]
+      else:
+        df_features = self.training_features
 
-        # drop zero-variance columns
-        var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
-        df = df_features[var_cols]
+      logging.debug('features shape: {}'.format(df_features.shape))
 
-        logging.debug('Dropped {:,} columns that have zero variance.'.format(len(df_features.columns)-len(var_cols)))
+      # drop zero-variance columns
+      var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
+      df = df_features[var_cols]
 
-        del df_features
-        df_features = df
+      logging.debug('Dropped {:,} columns that have zero variance.'.format(len(df_features.columns)-len(var_cols)))
 
-        logging.debug('Shape after dropping zero-variance columns - rows: {:,}, columns: {:,}'.
-          format(len(df_features), len(df_features.columns)))
+      del df_features
+      df_features = df
+
+      logging.debug('Shape after dropping zero-variance columns - rows: {:,}, columns: {:,}'.
+        format(len(df_features), len(df_features.columns)))
 
 
-        # Get important features using XGBoost
-        Y = df_features['activity'].values
-        X = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
+      # Get important features using XGBoost
+      Y = df_features['activity'].values
+      X = df_features.loc[:, ~df_features.columns.isin(self.non_feature_columns)]
 
-        print('\n\n X: \n\n')
-        print(X.head())
+      print('\n\n X: \n\n')
+      print(X.head())
 
-        logging.debug('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
-        X.columns = list(range(0, len(X.columns)))
+      logging.debug('X with non-features dropped - rows: {:,}, columns: {:,}'.format(len(X), len(X.columns)))
+      X.columns = list(range(0, len(X.columns)))
 
-        # train
-        sample_weight = None
-        if use_dimension_reduction_weights == True:
-          sample_weight = df_features['sample_activity_score']
-        xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
+      # train
+      sample_weight = None
+      if use_dimension_reduction_weights == True and 'activity_score' in df_features:
+        sample_weight = df_features['activity_score']
 
-        # get features
-        xgb_features = self.__get_features(xgb, df_features)
-        top_feature_cols = list(xgb_features['feature'].values)
-        logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
-        df = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+top_feature_cols]
-        del df_features
-        df_features = df
+      xgb = self.__train(X, Y, xgb=self.__get_xgb(), sample_weight=sample_weight)
 
-        # cid set with subset of features derived from previous cid/pid combined dimension reduction
-        drug_column_names = self.__get_drug_column_names()
-        cid_features = [col for col in top_feature_cols if col in drug_column_names]
+      # get features
+      xgb_features = self.__get_features(xgb, df_features)
+      top_feature_cols = list(xgb_features['feature'].values)
+      logging.debug('number of most important features: {:,}'.format(len(xgb_features)))
+      df = df_features[self.non_feature_columns+top_feature_cols]
+      del df_features
+      df_features = df
 
-        df_drugs = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+cid_features]
-        logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
-        logging.debug('cid features:')
-        logging.debug(df_drugs.head())
+      # cid set with subset of features derived from previous cid/pid combined dimension reduction
+      drug_column_names = self.__get_drug_column_names()
+      cid_features = [col for col in top_feature_cols if col in drug_column_names]
 
-        # pid set with subset of features derived from previous cid/pid combined dimension reduction
-        protein_column_names = self.__get_protein_column_names()
-        pid_features = [col for col in top_feature_cols if col in protein_column_names]
-        df_proteins = df_features[['cid', 'pid', 'activity', 'sample_activity_score']+pid_features]
-        logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
-        logging.debug('pid features:')
-        logging.debug(df_proteins.head())
+      df_drugs = df_features[self.non_feature_columns+cid_features]
+      logging.debug('df_drugs - rows: {:,}, columns: {:,}'.format(len(df_drugs), len(df_drugs.columns)))
+      logging.debug('cid features:')
+      logging.debug(df_drugs.head())
 
-        # Run models
-        logging.debug('cid/pid combined with activity score weighting, results:')
-        combined_model_results = self.__train_and_eval(df_features, df_validation, use_weights=use_training_weights)
+      # pid set with subset of features derived from previous cid/pid combined dimension reduction
+      protein_column_names = self.__get_protein_column_names()
+      pid_features = [col for col in top_feature_cols if col in protein_column_names]
+      df_proteins = df_features[self.non_feature_columns+pid_features]
+      logging.debug('df_proteins - rows: {:,}, columns: {:,}'.format(len(df_proteins), len(df_proteins.columns)))
+      logging.debug('pid features:')
+      logging.debug(df_proteins.head())
 
-        logging.debug('cid with activity score weighting, results:')
-        drugs_model_results = self.__train_and_eval(df_drugs, df_validation, use_weights=use_training_weights)
+      # Run models
+      logging.debug('cid with activity score weighting, results:')
+      drugs_model_results = self.__train_and_eval(df_drugs, df_validation)
 
-        logging.debug('pid combined with activity score weighting, results:')
-        proteins_model_results = self.__train_and_eval(df_proteins, df_validation, use_weights=use_training_weights)
+      logging.debug('pid combined with activity score weighting, results:')
+      proteins_model_results = self.__train_and_eval(df_proteins, df_validation)
 
-        combined_results.append(combined_model_results)
-        drugs_results.append(drugs_model_results)
-        proteins_results.append(proteins_model_results)
+      # Combined model results
+      logging.debug('cid/pid combined with activity score weighting, results:')
+      combined_model_results = self.__train_and_eval(df_features, df_validation)
 
-        self.__results_to_csv(
-          activity_threshold,
-          run_id,
-          use_dimension_reduction_weights,
-          use_training_weights,
-          combined_model_results,
-          drugs_model_results,
-          proteins_model_results)
+      self.__probs_to_csv(
+        use_dimension_reduction_weights,
+        combined_model_results,
+        drugs_model_results,
+        proteins_model_results)
 
-        self.__importance_to_csv(
-          run_id,
-          xgb_features,
-          combined_model_results['model'],
-          drugs_model_results['model'],
-          proteins_model_results['model'],
-          df_features,
-          df_drugs,
-          df_proteins)
+      # Target metric
+      self.__target_metric(combined_model_results)
 
-        del df_features
-        del df_drugs
-        del df_proteins
-        del combined_model_results['model']
-        del drugs_model_results['model']
-        del proteins_model_results['model']
+      self.__importance_to_csv(
+        xgb_features,
+        combined_model_results['model'],
+        drugs_model_results['model'],
+        proteins_model_results['model'],
+        df_features,
+        df_drugs,
+        df_proteins)
 
-        run_id = run_id+1
-        thresholds.append(activity_threshold)
-        activity_threshold = round(activity_threshold - self.activity_threshold_step, 4)
-        gc.collect()
+      del df_features
+      del df_drugs
+      del df_proteins
+      del combined_model_results['model']
+      del drugs_model_results['model']
+      del proteins_model_results['model']
+
+      gc.collect()
 
       self.__params_and_metrics_to_csv(
-        thresholds,
         use_dimension_reduction_weights,
-        use_training_weights,
-        combined_results,
-        drugs_results,
-        proteins_results)
+        combined_model_results)
+
+  def __target_metric(self, combined_model_results):
+    prediction_model_probs = combined_model_results['probabilities'][:, 1]
+    df_validation = combined_model_results['df_validation'].copy()
+    df_validation['probabilities'] = prediction_model_probs
+    df_validation.sort_values(by='probabilities', ascending=False, inplace=True)
+
+    start_k = 1
+    end_k = len(df_validation)
+    k_inc = 10
+
+    results = []
+
+    for p in [25, 50, 100, 250, 500]:
+      weights = [v**p for v in df_validation['latent_prob_delta_ratio']]
+      df_validation['p'] = weights
+      for k in range(start_k, end_k, k_inc):
+        v = df_validation[:k][(df_validation['activity'] == 1.0)]
+        sum_of_weights_p = v['p'].sum()
+        p_at_k = v['activity'].sum()/k
+        weighted_p_at_k = sum_of_weights_p/df_validation[:k]['p'].sum()
+        result = [p, k, sum_of_weights_p, p_at_k, weighted_p_at_k]
+        results.append(result)
+
+    self.__target_metric_to_csv(results)
+    del df_validation
+
+  def __target_metric_to_csv(self, results):
+    columns = ['p', 'k', 'sum_of_weights^p', 'p@k', 'weighted_p@k']
+    df = pd.DataFrame(results, columns=columns)
+    path = 'results/'+self.job_name+'/target_metric.csv'
+    df.to_csv(path, index=False)
+    del df
 
 
   '''
@@ -286,7 +299,6 @@ class XGBoostClassifier():
   # Write feature imprtances to file
   def __importance_to_csv(
     self,
-    run_id,
     df_dimension_reduction_importances,
     combined_model,
     drugs_model,
@@ -308,7 +320,6 @@ class XGBoostClassifier():
     for index, row in df_dimension_reduction_importances.iterrows():
       result = []
       feature = row['feature']
-      result.append(run_id)
       result.append(feature)
       result.append(row['importance'])
 
@@ -330,7 +341,6 @@ class XGBoostClassifier():
       results.append(result)
 
     df = pd.DataFrame(results, columns=[
-      'run_id',
       'feature',
       'dim_red importance',
       'combined_classification',
@@ -338,7 +348,7 @@ class XGBoostClassifier():
       'protein_classification'
       ])
 
-    path = 'results/'+self.job_name+'/feature_importances_{}.csv'.format(run_id)
+    path = 'results/'+self.job_name+'/feature_importances.csv'
     df.to_csv(path, index=False)
     del df
 
@@ -346,49 +356,28 @@ class XGBoostClassifier():
   # Write parameters and metrics to CSV for each run
   def __params_and_metrics_to_csv(
     self,
-    activity_thresholds,
     used_dimension_reduction_weights,
-    used_training_weights,
-    combined_results,
-    drugs_results,
-    proteins_results):
+    combined_results):
 
-    results = []
+    result = []
+    result.append(used_dimension_reduction_weights)
+    result.append(combined_results['accuracy'])
+    result.append(combined_results['precision'])
+    result.append(combined_results['recall'])
+    result.append(self.learning_rate)
+    result.append(self.n_estimators)
+    result.append(self.objective)
+    result.append(self.subsample)
+    result.append(self.min_child_weight)
+    result.append(self.max_depth)
+    result.append(self.gamma)
+    result.append(self.colsample_bytree)
 
-    for i in range(len(activity_thresholds)):
-      result = []
-      result.append(i)
-      result.append(activity_thresholds[i])
-      result.append(used_dimension_reduction_weights)
-      result.append(used_training_weights)
-
-      result.append(combined_results[i]['accuracy'])
-      result.append(combined_results[i]['precision'])
-      result.append(combined_results[i]['recall'])
-      result.append(combined_results[i]['f1_score_weighted'])
-      result.append(combined_results[i]['f1_score_unweighted'])
-
-      result.append(self.learning_rate)
-      result.append(self.n_estimators)
-      result.append(self.objective)
-      result.append(self.subsample)
-      result.append(self.min_child_weight)
-      result.append(self.max_depth)
-      result.append(self.gamma)
-      result.append(self.colsample_bytree)
-
-      results.append(result)
-
-    df = pd.DataFrame(results, columns=[
-      'run_id',
-      'run_threshold',
+    columns=[
       'used_dim_red_weights',
-      'used_training_weights',
       'accuracy',
       'precision',
       'recall',
-      'f1_score_weighted',
-      'f1_score_unweighted',
       'xgb_learning_rate',
       'xgb_n_estimators',
       'xgb_objective',
@@ -397,44 +386,57 @@ class XGBoostClassifier():
       'xgb_max_depth',
       'xgb_gamma',
       'xgb_colsample_bytree'
-      ])
+    ]
+
+    tuples = list(zip(columns, result)) 
+
+    df = pd.DataFrame(tuples, columns=['name', 'value'])
 
     path = 'results/'+self.job_name+'/params_and_metrics.csv'
     df.to_csv(path, index=False)
     del df
 
 
-  # Write modeling results to CSV
-  def __results_to_csv(
+  # Write modeling probabilities to CSV
+  def __probs_to_csv(
     self, 
-    threshold,
-    run_id,
     used_dimension_reduction_weights,
-    used_training_weights,
     combined_model_results,
     drugs_model_results,
     proteins_model_results):
 
     df_validation = combined_model_results['df_validation']
     df_validation.reset_index(inplace=True, drop=True)
-    validation_weights = combined_model_results['validation_weights']
 
     logging.debug('validation observations:')
     logging.debug(df_validation.head())
 
     results = []
+    has_activity_score = 'activity_score' in df_validation
+    has_latent_prob_delta_ratio = 'latent_prob_delta_ratio' in df_validation
+
+    columns=[
+      'used_dim_red_weights',
+      'cid',
+      'pid',
+      'activity',
+      'cid_only_predict_proba',
+      'pid_only_predict_proba',
+      'combined_predict_proba'
+    ]
+
+    if has_activity_score:
+      columns.append('activity_score')
+
+    if has_latent_prob_delta_ratio:
+      columns.append('latent_prob_delta_ratio')
 
     for index, row in df_validation.iterrows():
       result = []
-      result.append(run_id)
-      result.append(threshold)
       result.append(used_dimension_reduction_weights)
-      result.append(used_training_weights)
       result.append(row['cid'])
       result.append(row['pid'])
       result.append(row['activity'])
-      result.append(row['sample_activity_score'])
-      result.append(validation_weights[index])
 
       cid_only_probability = drugs_model_results['probabilities'][index][1]
       pid_only_probability = proteins_model_results['probabilities'][index][1]
@@ -444,22 +446,15 @@ class XGBoostClassifier():
       result.append(pid_only_probability)
       result.append(combined_probability)
 
+      if has_activity_score:
+        result.append(row['activity_score'])
+
+      if has_latent_prob_delta_ratio:
+        result.append(row['latent_prob_delta_ratio'])
+
       results.append(result)
 
-    df = pd.DataFrame(results, columns=[
-      'run_id',
-      'run_threshold',
-      'used_dim_red_weights',
-      'used_training_weights',
-      'cid',
-      'pid',
-      'activity',
-      'sample_activity_score',
-      'validation_weight',
-      'cid_only_predict_proba',
-      'pid_only_predict_proba',
-      'combined_predict_proba'
-      ])
+    df = pd.DataFrame(results, columns=columns)
 
     path = 'results/'+self.job_name
     try:
@@ -469,7 +464,7 @@ class XGBoostClassifier():
     else:
       logging.debug ("Successfully created the directory %s " % path)
 
-    file_path = 'results/'+self.job_name+'/results_{}_.csv'.format(run_id)
+    file_path = 'results/'+self.job_name+'/probabilities.csv'
     df.to_csv(file_path, index=False)
     del df
 
@@ -589,8 +584,6 @@ class XGBoostClassifier():
     df_interactions = self.__load_data(
       self.data_loc+'training_validation_split/' + split_file_name)
 
-    # Rename the 'canonical_cid' column simply to 'cid' to simplifiy joining to the other feature sets later.
-    df_interactions.rename(columns={"canonical_cid": "cid"}, inplace=True)
     logging.debug(df_interactions.head())
     
     # Get the individual feature sets
@@ -675,22 +668,6 @@ class XGBoostClassifier():
     return pd.DataFrame({'feature': top_feature_cols, 
       'importance': list(gain_importance.values())}, columns = ['feature', 'importance'])
 
-  # calculate the sample weights used for the F1 Score
-  # TODO: Brian to write documentation for this:
-  def __get_validation_weights(self, training_features_active, training_features_inactive,
-                             validation_features_active, validation_features_inactive):
-    active_nbrs = NearestNeighbors(n_neighbors=1).fit(training_features_active)
-    inactive_nbrs = NearestNeighbors(n_neighbors=1).fit(training_features_inactive)
-    act_act_distances, _ = active_nbrs.kneighbors(validation_features_active)
-    inact_act_distances, _ = active_nbrs.kneighbors(validation_features_inactive)
-    act_inact_distances, _ = inactive_nbrs.kneighbors(validation_features_active)
-    inact_inact_distances, _ = inactive_nbrs.kneighbors(validation_features_inactive)
-    active_scores = act_act_distances / act_inact_distances
-    active_weights = (1 + np.argsort(np.argsort(active_scores.flatten()))) / len(active_scores)
-    inactive_scores = inact_inact_distances / inact_act_distances
-    inactive_weights = (1 + np.argsort(np.argsort(inactive_scores.flatten()))) / len(inactive_scores)
-    return active_weights, inactive_weights
-
   # get only the feature names from a csv file
   def __get_csv_feature_names(self, file):
     columns = pd.read_csv(self.data_loc + file, index_col=0, nrows=1).columns.tolist()
@@ -700,35 +677,20 @@ class XGBoostClassifier():
   # load test data and gather metrics
   def __gather_metrics(self, df_in, model, df_validation):
     # Take only the reduced set of columns.
-    df_validation = df_validation[df_in.columns.tolist()]
+    non_Feature_cols = self.non_feature_columns.copy()
+    if 'latent_prob_delta_ratio' in df_validation:
+      non_Feature_cols.append('latent_prob_delta_ratio')
+      cols = df_in.columns.tolist()
+      cols.append('latent_prob_delta_ratio')
+      df_validation = df_validation[cols]
+    else:
+      df_validation = df_validation[df_in.columns.tolist()]
 
     logging.debug('rows: {:,}, columns: {:,}'.format(len(df_validation), len(df_validation.columns)))
+    logging.debug('removed non-feature cols from df_validation: {}'.format(non_Feature_cols))
 
-    # weighted F1 score
-    training_features_active = df_in[df_in['activity']==1]
-    training_features_inactive = df_in[df_in['activity']==0]
-    
-    training_features_active = \
-      training_features_active.loc[:, ~training_features_active.columns.isin(self.non_feature_columns)]
-    training_features_inactive = \
-      training_features_inactive.loc[:, ~training_features_inactive.columns.isin(self.non_feature_columns)]
-
-    validation_features_active = df_validation[df_validation['activity']==1]
-    validation_features_inactive = df_validation[df_validation['activity']==0]
-
-    # Needed later for reporting
-    df_validation_features = validation_features_active.append(validation_features_inactive)
-
-    y_test = df_validation_features['activity'].values
-
-    # remove the non-feature columns
-    validation_features_active = \
-      validation_features_active.loc[:, ~validation_features_active.columns.isin(self.non_feature_columns)]
-
-    validation_features_inactive = \
-      validation_features_inactive.loc[:, ~validation_features_inactive.columns.isin(self.non_feature_columns)]
-    
-    X_test = validation_features_active.append(validation_features_inactive)
+    y_test = df_validation['activity'].values
+    X_test = df_validation.loc[:, ~df_validation.columns.isin(non_Feature_cols)]
 
     # accuracy, precision and recall
     X_test.columns = list(range(0, len(X_test.columns)))
@@ -746,35 +708,15 @@ class XGBoostClassifier():
     logging.debug("Precision = {:0.2f}%".format(precision))
     logging.debug("Recall = {:0.2f}%".format(recall))
 
-    active_weights, inactive_weights = self.__get_validation_weights(
-        training_features_active, 
-        training_features_inactive,
-        validation_features_active, 
-        validation_features_inactive)
-
-    assert(len(inactive_weights) + len(active_weights) == len(df_validation))
-
-    weights = list(active_weights) + list(inactive_weights)
-
-    f1score = f1_score(y_test, y_pred, average='binary', sample_weight=weights)
-
-    logging.debug('F1 Score (weighted): {:0.2f}%'.format(f1score*100))
-    
-    f1score_unweighted = f1_score(y_test, y_pred, average='binary')
-    logging.debug('F1 Score (unweighted): {:0.2f}%'.format(f1score_unweighted*100))
-    
     probabilities = model.predict_proba(X_test)
 
     return {
       'model': model,
       'probabilities': probabilities, 
-      'validation_weights': weights,
-      'df_validation': df_validation_features,
+      'df_validation': df_validation,
       'accuracy': accuracy,
       'precision': precision,
-      'recall': recall,
-      'f1_score_weighted': f1score,
-      'f1_score_unweighted': f1score_unweighted}
+      'recall': recall}
       
       
   # load drug data column names
@@ -816,8 +758,8 @@ class XGBoostClassifier():
                         colsample_bytree=self.colsample_bytree)
     return xgb
 
-  # Model for combined cid/pid features using activity scores as sample weights.
-  def __train_and_eval(self, df_in, df_validation, use_weights=True):
+
+  def __train_and_eval(self, df_in, df_validation):
     Y = df_in['activity'].values
     
     X = df_in.loc[:, ~df_in.columns.isin(self.non_feature_columns)]
@@ -825,16 +767,14 @@ class XGBoostClassifier():
 
     xgb = self.__get_xgb()
 
-    sample_weight = None
-    if use_weights == True:
-      sample_weight = df_in['sample_activity_score']
-
-    model = self.__train(X, Y, xgb=xgb, sample_weight=sample_weight)
+    model = self.__train(X, Y, xgb=xgb)
+    training_probabilities = model.predict_proba(X)
     del X
     del Y
 
     # load test data and gather metrics
     results = self.__gather_metrics(df_in, model, df_validation)
+    results['training_probabilities'] = training_probabilities
     return results
 
 
@@ -842,80 +782,62 @@ def main(argv):
   training_features = None
   validation_features = None
   max_activity_threshold = None
-  activity_threshold_step = None
-  activity_threshold_stop = 0.0
+  min_activity_threshold = None
   data_folder = 'data/'
-  use_dimension_reduction_weights = 'True'
-  use_training_weights = 'True'
+  use_dimension_reduction_weights = 'False'
+  k = 1
   job_name = ''
 
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"ha:s:m:f:d:t:n:",["athresh=", "step=", "stop=", "data=", "dweights=", "tweights=", "name="])
+    opts, args = getopt.getopt(argv,"ha:s:f:d:t:n:",["athresh=", "sthresh=", "data=", "dweights=", "name="])
   except getopt.GetoptError:
     print('\n\n')
-    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop> \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+    logging.debug('job.py -a <max_activity_threshold> -s <min_activity_threshold> \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
     print('\n\n')
-    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+    logging.debug('job.py -a <max_activity_threshold> -s <min_activity_threshold>  \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
     print('\n\n')
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
       print('\n\n')
-      logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
+      logging.debug('job.py -a <max_activity_threshold> -s <min_activity_threshold>  \
+-f <data_folder> -d <use_weights_for_dimension_reduction> -n <job_name>')
       print('\n\n')
       sys.exit()
     elif opt in ("-a", "--athresh"):
       max_activity_threshold = arg
-    elif opt in ("-s", "--step"):
-      activity_threshold_step = arg
-    elif opt in ("-m", "--stop"):
-      activity_threshold_stop = arg
+    elif opt in ("-s", "--sthresh"):
+      min_activity_threshold = arg
     elif opt in ("-f", "--data"):
       data_folder = arg
     elif opt in ("-d", "--dweights"):
       use_dimension_reduction_weights = arg
-    elif opt in ("-t", "--tweights"):
-      use_training_weights = arg
     elif opt in ("-n", "--name"):
       job_name = arg
 
-
-  if max_activity_threshold is None or activity_threshold_step is None:
-    print('\n\n')
-    logging.debug('job.py -a <max_activity_threshold> -s <activity_threshold_step> -m <activity_threshold_stop>  \
--f <data_folder> -d <use_weights_for_dimension_reduction> -t <use_training_weights> -n <job_name>')
-    print('\n\n')
-    sys.exit()
-
   logging.debug('max_activity_threshold is {}'.format(max_activity_threshold))
-  logging.debug('activity_threshold_step is {}'.format(activity_threshold_step))
-  logging.debug('activity_threshold_stop is {}'.format(activity_threshold_stop))
+  logging.debug('min_activity_threshold is {}'.format(min_activity_threshold))
   logging.debug('use_dimension_reduction_weights is {}'.format(use_dimension_reduction_weights=='True'))
-  logging.debug('use_training_weights is {}'.format(use_training_weights=='True'))
 
   xgb = XGBoostClassifier(
     max_activity_threshold=max_activity_threshold,
-    activity_threshold_step=activity_threshold_step,
-    activity_threshold_stop=activity_threshold_stop,
+    min_activity_threshold=min_activity_threshold,
     data_folder=data_folder, 
     use_dimension_reduction_weights=use_dimension_reduction_weights=='True',
-    use_training_weights=use_training_weights=='True',
     job_name=job_name)
 
 
 if __name__== "__main__":
   main(sys.argv[1:])
-
 
 
 
