@@ -125,7 +125,7 @@ class XGBoostClassifier():
         'test',
         'prediction',
         'weight']
-
+      
       # drop zero-variance columns
       var_cols = [col for col in df_features.columns if df_features[col].nunique() > 1]
       df = df_features[var_cols]
@@ -170,11 +170,11 @@ class XGBoostClassifier():
             colsample_bytree=colsample_bytree)
 
         if use_sample_weights == 1:
-          sample_weight = df_validation['weight']
+          sample_weight = df_features['weight']
         else:
           sample_weight = None
 
-        model_results = self.__train_and_eval(df_features, df_validation, xgb)
+        model_results = self.__train_and_eval(df_features, df_validation, xgb, sample_weight)
         gc.collect()
 
         target_metric = model_results['target_metric']
