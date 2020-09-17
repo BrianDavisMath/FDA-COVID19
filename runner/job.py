@@ -14,17 +14,13 @@ Inputs are:
   [-n] name - job name used to place results in a directory of that name
 
   [-r] number of runs - used to determine the number of random samples to
-  take from the hyperparameter space during gridsearch.
+  take from the hyperparameter space during fitting.
 
 
 Outputs:
 
-  results.csv - model outputs including binary classification for activity 
-  as well as probability of activity for each cid/pid pair in the
-  validation set;
-
-  params_and_metrics.csv - the accuracy, precision, recall etc.
-  representing model performane along with the XGBoost parameters used
+  results.csv - target metric, accuracy, precision and recall along with the
+  hyperparameters used to obtain the results
 
   Note: all results files are written to a dynamically created **results folder**.
 
