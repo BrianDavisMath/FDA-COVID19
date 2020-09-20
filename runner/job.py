@@ -16,6 +16,8 @@ Inputs are:
   [-r] number of runs - used to determine the number of random samples to
   take from the hyperparameter space during fitting.
 
+  [-c] generate continuous features files (one for cids and one for pids) for all interactions (non-zero for true)
+
 
 Outputs:
 
@@ -23,6 +25,9 @@ Outputs:
   hyperparameters used to obtain the results
 
   Note: all results files are written to a dynamically created **results folder**.
+
+  If the [-c] flag is set then the output will be a two h5 files containing all
+  of the continuous features for cids and pids joined to the interactions file.
 
 
 Data folder:
@@ -42,6 +47,10 @@ Data folder:
     | | |____binding_sites.csv
     | | |____profeat.csv
     | | |____expasy.csv
+    |____coronavirus_features
+    | | |____binding_sites.csv
+    | | |____profeat.csv
+    | | |____expasy.csv
     | |____training_validation_split
     | | |____weighted_interactions_v5.csv
 
@@ -57,6 +66,7 @@ import sys, getopt
 import os
 import gc
 import random
+import h5py
 import pandas as pd
 import numpy as np
 
@@ -82,7 +92,8 @@ class XGBoostClassifier():
     self, 
     data_folder,
     job_name,
-    num_runs):
+    num_runs,
+    generate_cont_features):
 
       self.data_loc = data_folder
       self.job_name = job_name
@@ -97,6 +108,10 @@ class XGBoostClassifier():
       # load interactions.csv
       df_interactions = self.__load_data(
         self.data_loc+'training_validation_split/weighted_interactions_v5.csv')
+
+      if generate_cont_features:
+        self.__generate_continuous_features_file(df_interactions)
+        return
 
       df_interactions['cid']=df_interactions['cid'].astype(int)
 
@@ -229,6 +244,79 @@ class XGBoostClassifier():
     df.to_csv(path, index=False)
     del df
 
+
+  '''
+  ==================================================================
+  Misc functions
+  ==================================================================
+  '''
+  def __create_cont_features(self, feature_sets, df_interactions):
+    logging.debug('Creating continuous features files for cids and pids...\n')
+    df_dragon_features = feature_sets['df_dragon_features']
+    df_expasy = feature_sets['df_expasy']
+    df_profeat = feature_sets['df_profeat']
+
+    df_expasy_corona = feature_sets['df_expasy_corona'][df_expasy.columns]
+    df_profeat_corona = feature_sets['df_profeat_corona']
+    
+    df_expasy_all = pd.concat([df_expasy, df_expasy_corona])
+    df_profeat_all = pd.concat([df_profeat, df_profeat_corona])
+    
+    logging.debug('df_expasy shape: {}'.format(df_expasy.shape))
+    logging.debug('df_expasy_corona shape: {}'.format(df_expasy_corona.shape))
+    logging.debug('df_expasy_all shape: {}'.format(df_expasy_all.shape))
+
+    logging.debug('df_profeat shape: {}'.format(df_profeat.shape))
+    logging.debug('df_profeat_corona shape: {}'.format(df_profeat_corona.shape))
+    logging.debug('df_profeat_all shape: {}\n'.format(df_profeat_all.shape))
+
+    df_pid_features = pd.merge(df_interactions, df_expasy_all, on='pid', how='inner')
+    df_pid_features = pd.merge(df_pid_features, df_profeat_all, on='pid', how='inner')
+    
+    df_dragon_features.index.name = 'cid'
+    df_cid_features = pd.merge(df_interactions, df_dragon_features, on='cid', how='inner')
+    
+    # release memory used by previous dataframes.
+    del df_expasy
+    del df_profeat
+    del df_expasy_corona
+    del df_profeat_corona
+    del df_expasy_all
+    del df_profeat_all
+    del df_dragon_features
+    
+    return {'pid': df_pid_features, 'cid': df_cid_features}
+
+
+  def __generate_continuous_features_file(self, df_interactions):
+    '''
+    Generate a features file containing all cid and pid continuous features
+    joined to the interactions file.
+    '''
+    path = 'results/'+self.job_name
+    try:
+      os.makedirs(path, exist_ok=True)
+    except OSError:
+      logging.debug ("Creation of the directory %s failed" % path)
+    else:
+      logging.debug ("Successfully created the directory %s " % path)
+
+    # Save continuous features to file.
+    res = self.__create_cont_features(self.feature_sets, df_interactions)
+    
+    path = 'results/'+self.job_name+'/continuous_pid_features_v5.h5'
+    store = pd.HDFStore(path)
+    store['df'] = res['pid']
+    store.close()
+
+    path = 'results/'+self.job_name+'/continuous_cid_features_v5.h5'
+    store = pd.HDFStore(path)
+    store['df'] = res['cid']
+    store.close()
+
+    logging.debug ("Successfully saved continuous features to %s " % path)
+
+
   '''
   ==================================================================
   Functions for stitching together the individual features CSV files
@@ -287,16 +375,21 @@ class XGBoostClassifier():
     df_fingerprints = self.__load_data(self.data_loc+'drug_features/fingerprints.csv')
     
     df_binding_sites = self.__load_data(self.data_loc+'protein_features/binding_sites.csv')
+    df_binding_sites_corona = self.__load_data(self.data_loc+'coronavirus_features/binding_sites.csv')
     
     # Name the index to 'pid' to allow joining to other feaure files later.
     df_binding_sites.index.name = 'pid'
+    df_binding_sites_corona.index.name = 'pid'
     
     df_expasy = self.__load_data(self.data_loc+'protein_features/expasy.csv')
-    
+    df_expasy_corona = self.__load_data(self.data_loc+'coronavirus_features/expasy.csv')
+
     df_profeat = self.__load_data(self.data_loc+'protein_features/profeat.csv')
-    
+    df_profeat_corona = self.__load_data(self.data_loc+'coronavirus_features/profeat.csv')
+
     # Name the index to 'pid' to allow joining to other feaure files later.
     df_profeat.index.name = 'pid'
+    df_profeat_corona.index.name = 'pid'
     
     # profeat has some missing values.
     s = df_profeat.isnull().sum(axis = 0)
@@ -310,8 +403,11 @@ class XGBoostClassifier():
     return {'df_dragon_features': df_dragon_features,
            'df_fingerprints': df_fingerprints,
            'df_binding_sites': df_binding_sites,
+           'df_binding_sites_corona': df_binding_sites_corona,
            'df_expasy': df_expasy,
-           'df_profeat': df_profeat}
+           'df_expasy_corona': df_expasy_corona,
+           'df_profeat': df_profeat,
+           'df_profeat_corona': df_profeat_corona}
 
 
   def __create_features(self, feature_sets, df_interactions):
@@ -444,27 +540,28 @@ def main(argv):
   num_runs = 10
   k = 1
   job_name = ''
+  generate_cont_features = False
 
   
   # check arguments.
   try:
-    opts, args = getopt.getopt(argv,"hf:n:r:",["data=", "name=", "runs="])
+    opts, args = getopt.getopt(argv,"hf:n:r:c:",["data=", "name=", "runs=", "cfeat="])
   except getopt.GetoptError:
     print('\n\n')
-    logging.debug('job.py -f <data_folder> -n <job_name> -r <number of runs>')
+    logging.debug('job.py -f <data_folder> -n <job_name> -r <number of runs> -c <generate continuous features>')
     print('\n\n')
     sys.exit(2)
 
   if len(opts) < 2:
     print('\n\n')
-    logging.debug('job.py -f <data_folder> -n <job_name> -r <number of runs>')
+    logging.debug('job.py -f <data_folder> -n <job_name> -r <number of runs> -c <generate continuous features>')
     print('\n\n')
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
       print('\n\n')
-      logging.debug('job.py -f <data_folder> -n <job_name> -r <number of runs>')
+      logging.debug('job.py -f <data_folder> -n <job_name> -r <number of runs> -c <generate continuous features>')
       print('\n\n')
       sys.exit()
     elif opt in ("-f", "--data"):
@@ -473,15 +570,19 @@ def main(argv):
       job_name = arg
     elif opt in ("-r", "--runs"):
       num_runs = int(arg)
+    elif opt in ("-c", "--cfeat"):
+      generate_cont_features = arg is not None
 
   logging.debug('\ndata in {}'.format(data_folder))
   logging.debug('job name {}'.format(job_name))
-  logging.debug('runs {}\n'.format(num_runs))
+  logging.debug('runs {}'.format(num_runs))
+  logging.debug('generate_cont_features {}\n'.format(generate_cont_features))
 
   xgb = XGBoostClassifier(
     data_folder=data_folder, 
     job_name=job_name,
-    num_runs=num_runs)
+    num_runs=num_runs,
+    generate_cont_features=generate_cont_features)
 
 
 if __name__== "__main__":

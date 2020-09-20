@@ -1,3 +1,5 @@
+h5py==2.10.0
+tables==3.6.1
 matplotlib==2.1.0
 numpy==1.16.2
 pandas==0.24.2
