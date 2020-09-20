@@ -46,18 +46,20 @@ Data folder:
     | |____protein_features
     | | |____binding_sites.csv
     | | |____profeat.csv
-    | | |____expasy.csv
     |____coronavirus_features
     | | |____binding_sites.csv
     | | |____profeat.csv
-    | | |____expasy.csv
     | |____training_validation_split
     | | |____weighted_interactions_v5.csv
 
 
 Example call to run program:
 
+  # train and gridsearch
   python job.py -f test_data/ -n 'test_0' -r 5
+
+  # generate continuous feature files
+  python job.py -f test_data/ -n 'test_0' -c 1
 
 
 '''
@@ -252,36 +254,24 @@ class XGBoostClassifier():
   '''
   def __create_cont_features(self, feature_sets, df_interactions):
     logging.debug('Creating continuous features files for cids and pids...\n')
-    df_dragon_features = feature_sets['df_dragon_features']
-    df_expasy = feature_sets['df_expasy']
-    df_profeat = feature_sets['df_profeat']
-
-    df_expasy_corona = feature_sets['df_expasy_corona'][df_expasy.columns]
-    df_profeat_corona = feature_sets['df_profeat_corona']
     
-    df_expasy_all = pd.concat([df_expasy, df_expasy_corona])
+    df_dragon_features = feature_sets['df_dragon_features']
+    df_profeat = feature_sets['df_profeat']
+    df_profeat_corona = feature_sets['df_profeat_corona']
     df_profeat_all = pd.concat([df_profeat, df_profeat_corona])
     
-    logging.debug('df_expasy shape: {}'.format(df_expasy.shape))
-    logging.debug('df_expasy_corona shape: {}'.format(df_expasy_corona.shape))
-    logging.debug('df_expasy_all shape: {}'.format(df_expasy_all.shape))
-
     logging.debug('df_profeat shape: {}'.format(df_profeat.shape))
     logging.debug('df_profeat_corona shape: {}'.format(df_profeat_corona.shape))
     logging.debug('df_profeat_all shape: {}\n'.format(df_profeat_all.shape))
 
-    df_pid_features = pd.merge(df_interactions, df_expasy_all, on='pid', how='inner')
-    df_pid_features = pd.merge(df_pid_features, df_profeat_all, on='pid', how='inner')
+    df_pid_features = pd.merge(df_interactions, df_profeat_all, on='pid', how='inner')
     
     df_dragon_features.index.name = 'cid'
     df_cid_features = pd.merge(df_interactions, df_dragon_features, on='cid', how='inner')
     
     # release memory used by previous dataframes.
-    del df_expasy
     del df_profeat
-    del df_expasy_corona
     del df_profeat_corona
-    del df_expasy_all
     del df_profeat_all
     del df_dragon_features
     
@@ -381,9 +371,6 @@ class XGBoostClassifier():
     df_binding_sites.index.name = 'pid'
     df_binding_sites_corona.index.name = 'pid'
     
-    df_expasy = self.__load_data(self.data_loc+'protein_features/expasy.csv')
-    df_expasy_corona = self.__load_data(self.data_loc+'coronavirus_features/expasy.csv')
-
     df_profeat = self.__load_data(self.data_loc+'protein_features/profeat.csv')
     df_profeat_corona = self.__load_data(self.data_loc+'coronavirus_features/profeat.csv')
 
@@ -404,8 +391,6 @@ class XGBoostClassifier():
            'df_fingerprints': df_fingerprints,
            'df_binding_sites': df_binding_sites,
            'df_binding_sites_corona': df_binding_sites_corona,
-           'df_expasy': df_expasy,
-           'df_expasy_corona': df_expasy_corona,
            'df_profeat': df_profeat,
            'df_profeat_corona': df_profeat_corona}
 
@@ -415,7 +400,6 @@ class XGBoostClassifier():
     df_dragon_features = feature_sets['df_dragon_features']
     df_fingerprints = feature_sets['df_fingerprints']
     df_binding_sites = feature_sets['df_binding_sites']
-    df_expasy = feature_sets['df_expasy']
     df_profeat = feature_sets['df_profeat']
     
     
@@ -424,11 +408,10 @@ class XGBoostClassifier():
     # https://github.com/BrianDavisMath/FDA-COVID19/tree/master/data.
     
     # By convention, the file features should be concatenated in the following order (for consistency):
-    # **binding_sites**, **expasy**, **profeat**, **dragon_features**, **fingerprints**.
+    # **binding_sites**, **profeat**, **dragon_features**, **fingerprints**.
     
     df_features = pd.merge(df_interactions, df_binding_sites, on='pid', how='inner')
     
-    df_features = pd.merge(df_features, df_expasy, on='pid', how='inner')
     
     df_features = pd.merge(df_features, df_profeat, on='pid', how='inner')
     
@@ -439,7 +422,6 @@ class XGBoostClassifier():
     
     # release memory used by previous dataframes.
     del df_binding_sites
-    del df_expasy
     del df_profeat
     del df_dragon_features
     del df_fingerprints
