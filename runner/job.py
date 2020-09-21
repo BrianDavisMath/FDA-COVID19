@@ -264,10 +264,10 @@ class XGBoostClassifier():
     logging.debug('df_profeat_corona shape: {}'.format(df_profeat_corona.shape))
     logging.debug('df_profeat_all shape: {}\n'.format(df_profeat_all.shape))
 
-    df_pid_features = pd.merge(df_interactions, df_profeat_all, on='pid', how='inner')
+    df_pid_features = pd.merge(df_interactions.drop_duplicates(['pid', 'activity']), df_profeat_all, on='pid', how='inner')
     
     df_dragon_features.index.name = 'cid'
-    df_cid_features = pd.merge(df_interactions, df_dragon_features, on='cid', how='inner')
+    df_cid_features = pd.merge(df_interactions.drop_duplicates(['cid', 'activity']), df_dragon_features, on='cid', how='inner')
     
     # release memory used by previous dataframes.
     del df_profeat
