@@ -8,7 +8,7 @@ imbalanced-learn==0.4.1
 xgboost==1.1.1
 dill==0.2.9
 pystache==0.5.4
-joblib==0.13.2
+joblib==1.2.0
 shap==0.35.0
 setuptools==50.0.3
 notebook==6.1.3
